@@ -44,6 +44,42 @@
 - Testes de integração PostgreSQL devem depender de banco local descartável ou container, nunca de banco de produção.
 - Testes de integração opcionais devem pular com mensagem clara quando o ambiente não estiver configurado.
 
+## Build modular do backend
+
+O `back-end/CMakeLists.txt` é apenas o ponto de composição. Fontes e testes são
+registrados em módulos dentro de `back-end/cmake/`, para que duas pessoas
+trabalhando em módulos diferentes nunca editem a mesma linha:
+
+- `cmake/helpers.cmake`: funções compartilhadas (`virtual_planner_add_sources`,
+  `virtual_planner_add_test`, `virtual_planner_enable_warnings`).
+- `cmake/sources/*.cmake`: fontes da biblioteca `virtual_planner_core`, por
+  camada (`core`, `domain`, `application`, `infrastructure`, `postgres`).
+- `cmake/tests/*.cmake`: alvos de teste, por módulo (`core`, `infrastructure`,
+  `goals`, `tasks`, `reminders`, `users`, `postgres`).
+
+### Como registrar um arquivo de código novo
+
+Adicione o caminho, relativo a `back-end/src`, no módulo correspondente em
+`cmake/sources/`:
+
+```cmake
+virtual_planner_add_sources(domain/entities/task.cpp)
+```
+
+### Como registrar um teste novo
+
+Adicione uma linha no módulo do seu domínio em `cmake/tests/`, com o caminho
+relativo a `back-end/tests`:
+
+```cmake
+virtual_planner_add_test(task_test unit/domain/entities/task_test.cpp)
+```
+
+A função já liga o alvo a `virtual_planner_core`, aplica os warnings padrão,
+registra o teste no CTest com o mesmo nome e coloca `back-end/tests` no include
+path. Por isso, use sempre `#include "support/expect.hpp"`, nunca caminhos
+relativos do tipo `../../support/expect.hpp`.
+
 ## Arquitetura
 
 - Mantenha o código de domínio independente de banco de dados, sistema de arquivos, variáveis de ambiente e detalhes de framework.
