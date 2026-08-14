@@ -27,6 +27,34 @@
 - Adapter PostgreSQL fica em `infrastructure/postgres`.
 - Scripts SQL versionados devem ficar em `migrations` quando houver schema real.
 
+## Arquivos na raiz do repositório
+
+A raiz é reservada a arquivos de configuração do projeto (`README.md`,
+`AGENTS.md`, `.gitignore`, `docker-compose.yml`). Não deixe material avulso ali:
+em um checkout novo o `git status` deve ficar limpo, sem arquivos untracked.
+
+- Material da disciplina que sirva de referência para o projeto (enunciado, guia
+  de fluxo do time) é versionado em `docs/`, com nome descritivo e sem espaços.
+- Anotações pessoais, exports temporários e binários grandes não entram no
+  repositório. Mantenha-os fora da árvore de trabalho ou sob um caminho já
+  ignorado.
+- Hoje nenhum PDF da disciplina está versionado. Ao adicionar o primeiro,
+  coloque-o em `docs/`, nunca na raiz.
+
+### Ferramentas locais de agentes
+
+`.claude/`, `.agents/` e `.tokensave/` são configuração e cache de ferramentas de
+IA, específicos da máquina de cada pessoa, e ficam ignorados pelo Git:
+
+- `.claude/` e `.agents/`: prompts, definições de agente e permissões locais.
+  Variam por pessoa e por ferramenta; versioná-los geraria conflito a cada PR.
+- `.tokensave/`: índice de código em SQLite, regenerável e grande demais para o
+  histórico.
+
+Se o time decidir compartilhar alguma dessas configurações, versione o arquivo
+específico com uma exceção explícita (`!`) no `.gitignore` e registre a decisão
+aqui — nunca o diretório inteiro.
+
 ## Includes
 
 - Inclua headers do projeto com o prefixo `virtual_planner/...`.
