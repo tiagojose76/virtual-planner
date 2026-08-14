@@ -92,6 +92,32 @@ O build padrão não exige dependências externas de runtime ou de teste. A inte
 
 Adicione novas bibliotecas externas apenas quando houver uma necessidade concreta e o tradeoff estiver documentado. Para o escopo acadêmico atual, prefira a STL e pequenas abstrações locais.
 
+## Decisões Registradas
+
+### ADR-001 — Destino das portas em `interfaces` (P-13)
+
+**Contexto.** `interfaces/` continha cinco portas sem nenhum consumidor no
+código: `cache.hpp`, `event_bus.hpp`, `logger.hpp`, `repository.hpp` e
+`serializer.hpp`. Apenas `config_provider.hpp` era realmente incluído (por
+`infrastructure/config/environment_config_loader.hpp`). Abstrações
+especulativas contrariam a regra do projeto de não criar infraestrutura além do
+necessário e aumentam o custo de manutenção sem benefício.
+
+**Decisão.** Manter em `interfaces/` somente portas com consumidor real hoje ou
+com consumidor explicitamente previsto por uma issue do backlog:
+
+| Porta | Destino | Justificativa |
+| --- | --- | --- |
+| `config_provider.hpp` | mantida | Consumida por `infrastructure/config/environment_config_loader.hpp`. |
+| `logger.hpp` | mantida | P-54 implementa o adaptador concreto desta porta; o escopo daquela issue depende dela. |
+| `cache.hpp` | removida | Sem consumidor e sem issue no backlog que exija cache. |
+| `event_bus.hpp` | removida | Sem consumidor e sem requisito de mensageria no escopo. |
+| `serializer.hpp` | removida | P-29.0 define a serialização JSON com funções livres sobre `to_string`/`from_string`, não com uma porta genérica. |
+| `repository.hpp` | removida | Os contratos de persistência reais são os de `persistence/*_repository.hpp`, que não derivam do template genérico; P-25 implementa aqueles contratos. |
+
+**Consequências.** Se uma dessas portas voltar a ser necessária, ela deve ser
+reintroduzida junto do primeiro consumidor real, no mesmo PR, nunca antes.
+
 ## Limitações Atuais
 
 - Não há pool de conexões.
