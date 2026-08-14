@@ -118,6 +118,49 @@ com consumidor explicitamente previsto por uma issue do backlog:
 **Consequências.** Se uma dessas portas voltar a ser necessária, ela deve ser
 reintroduzida junto do primeiro consumidor real, no mesmo PR, nunca antes.
 
+### ADR-002 — Modelo de usuário: usuário único com `user_id` explícito (P-22A)
+
+**Contexto.** O domínio tem a entidade `User`, mas nenhuma tabela tem `user_id`
+e não existe nenhum requisito de autenticação no backlog. Ao mesmo tempo, quatro
+pessoas vão escrever migrations de `Goal`, `Task`, `Reminder` e `User` na Onda 3.
+Se `user_id` entrar depois, as quatro precisam refazer schema e backfill.
+
+**Decisão.** O sistema é **single-tenant**: existe exatamente um usuário, sem
+cadastro, login, senha ou sessão. Ainda assim, as tabelas de dados do usuário
+nascem com `user_id` explícito, apontando para esse usuário único semeado pela
+migration base.
+
+**Impacto por entidade.**
+
+| Entidade | Impacto |
+| --- | --- |
+| `User` | Tabela `users` criada na faixa base, com uma linha semeada de `id = 1`. Sem coluna de senha e sem coluna de credencial. `email` continua sendo apenas dado de perfil. |
+| `Goal` | A migration de Goal (P-26.1) adiciona `user_id BIGINT NOT NULL REFERENCES users(id)`. A tabela `goals` atual, criada em `001`, não é reescrita: a coluna entra por migration nova, na faixa de Goal. |
+| `Task` | Migration de Task (P-26.2) já nasce com `user_id BIGINT NOT NULL REFERENCES users(id)`. |
+| `Reminder` | Migration de Reminder (P-26.3) já nasce com `user_id BIGINT NOT NULL REFERENCES users(id)`. |
+
+**Impacto em endpoints e autenticação.**
+
+- Não há autenticação, nem middleware de sessão, nem token.
+- O usuário corrente é resolvido no composition root como o usuário único e
+  injetado nos casos de uso; nenhum endpoint recebe `user_id` pelo cliente.
+- `GET /api/users/me` (P-33) devolve esse usuário único.
+- Endpoints de `Goal`, `Task` e `Reminder` não expõem `user_id` no payload nesta
+  fase; o filtro por usuário é aplicado no servidor.
+
+**Alternativa rejeitada.** Multiusuário com autenticação real: exigiria senha,
+hash, sessão/token e telas de cadastro, tudo fora do escopo acadêmico do
+projeto e sem issue no backlog que o cubra.
+
+**Alternativa rejeitada.** Single-tenant sem `user_id` nenhum: mais simples
+agora, mas transformaria qualquer evolução para multiusuário em reescrita de
+schema e backfill nas quatro tabelas — exatamente o risco que esta decisão
+existe para eliminar.
+
+**Consequências.** Nenhuma issue de Onda 3 fica bloqueada esperando decisão de
+identidade; a porta para multiusuário fica aberta ao custo de uma coluna e uma
+foreign key por tabela.
+
 ## Limitações Atuais
 
 - Não há pool de conexões.
