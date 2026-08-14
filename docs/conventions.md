@@ -37,6 +37,12 @@
 ## Testes
 
 - Testes unitários são executáveis C++ simples registrados no CTest.
+- `VP_EXPECT(condicao, "mensagem")`, de `back-end/tests/support/expect.hpp`, é o
+  **único** mecanismo de asserção do projeto. Não crie helper `expect()` local e
+  não use `assert()`: `assert()` é removido pelo compilador quando `NDEBUG` está
+  definido (`CMAKE_BUILD_TYPE=Release`) e faria o teste passar sem verificar nada.
+- Inclua o helper sempre como `#include "support/expect.hpp"`.
+- Não introduza framework de teste externo (GoogleTest, Catch2, doctest) sem ADR.
 - Cada executável de teste deve retornar um valor diferente de zero em caso de falha.
 - Organize cenários no padrão Arrange, Act, Assert.
 - Adicione um teste pequeno para cada nova primitiva arquitetural ou adaptador.
