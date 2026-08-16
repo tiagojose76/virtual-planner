@@ -1,4 +1,5 @@
 ﻿#include "virtual_planner/domain/entities/reminder.hpp"
+#include "virtual_planner/shared/errors.hpp"
 #include "support/expect.hpp"
 
 #include <chrono>
@@ -96,6 +97,91 @@ int main()
     VP_EXPECT(
         reminder.recurrence() == domain::ReminderRecurrence::Weekly,
         "change_recurrence should update recurrence"
+    );
+
+    bool empty_constructor_rejected = false;
+
+    try
+    {
+        domain::Reminder invalid{
+            1,
+            "",
+            domain::Category::Study,
+            initial_date,
+            initial_time,
+            domain::ReminderType::Study,
+            domain::ReminderRecurrence::Once
+        };
+    }
+    catch (const shared::ApplicationError&)
+    {
+        empty_constructor_rejected = true;
+    }
+
+    VP_EXPECT(
+        empty_constructor_rejected,
+        "constructor should reject an empty description"
+    );
+
+    bool blank_constructor_rejected = false;
+
+    try
+    {
+        domain::Reminder invalid{
+            2,
+            "   ",
+            domain::Category::Study,
+            initial_date,
+            initial_time,
+            domain::ReminderType::Study,
+            domain::ReminderRecurrence::Once
+        };
+    }
+    catch (const shared::ApplicationError&)
+    {
+        blank_constructor_rejected = true;
+    }
+
+    VP_EXPECT(
+        blank_constructor_rejected,
+        "constructor should reject a blank description"
+    );
+
+    bool empty_update_rejected = false;
+
+    try
+    {
+        reminder.update_description("");
+    }
+    catch (const shared::ApplicationError&)
+    {
+        empty_update_rejected = true;
+    }
+
+    VP_EXPECT(
+        empty_update_rejected,
+        "update_description should reject an empty description"
+    );
+
+    bool blank_update_rejected = false;
+
+    try
+    {
+        reminder.update_description("   ");
+    }
+    catch (const shared::ApplicationError&)
+    {
+        blank_update_rejected = true;
+    }
+
+    VP_EXPECT(
+        blank_update_rejected,
+        "update_description should reject a blank description"
+    );
+
+    VP_EXPECT(
+        reminder.description() == "Weekly meeting",
+        "rejected updates should preserve the previous description"
     );
 
     return 0;
