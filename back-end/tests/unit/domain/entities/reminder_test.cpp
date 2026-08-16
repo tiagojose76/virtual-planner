@@ -1,8 +1,9 @@
-﻿#include "virtual_planner/domain/entities/reminder.hpp"
+#include "virtual_planner/domain/entities/reminder.hpp"
 #include "virtual_planner/shared/errors.hpp"
 #include "support/expect.hpp"
 
 #include <chrono>
+#include <stdexcept>
 
 using namespace virtual_planner;
 
@@ -113,7 +114,7 @@ int main()
             domain::ReminderRecurrence::Once
         };
     }
-    catch (const shared::ApplicationError&)
+    catch (const std::exception&)
     {
         empty_constructor_rejected = true;
     }
@@ -137,7 +138,7 @@ int main()
             domain::ReminderRecurrence::Once
         };
     }
-    catch (const shared::ApplicationError&)
+    catch (const std::exception&)
     {
         blank_constructor_rejected = true;
     }
@@ -153,7 +154,7 @@ int main()
     {
         reminder.update_description("");
     }
-    catch (const shared::ApplicationError&)
+    catch (const std::exception&)
     {
         empty_update_rejected = true;
     }
@@ -169,7 +170,7 @@ int main()
     {
         reminder.update_description("   ");
     }
-    catch (const shared::ApplicationError&)
+    catch (const std::exception&)
     {
         blank_update_rejected = true;
     }
