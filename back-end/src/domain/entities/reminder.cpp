@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 #include <utility>
+#include <algorithm>
+#include <cctype>
 
 namespace virtual_planner::domain {
 
@@ -15,19 +17,25 @@ Reminder::Reminder(
     ReminderRecurrence recurrence
 )
     : id_(id),
-      description_(std::move(description)),
       category_(category),
       date_(date),
       time_slot_(time_slot),
       type_(type),
       recurrence_(recurrence)
 {
-    if (description_.empty())
+   
+    std::string check_desc = description;
+    check_desc.erase(std::remove_if(check_desc.begin(), check_desc.end(), ::isspace), check_desc.end());
+
+    if (check_desc.empty())
     {
         throw std::invalid_argument(
-            "Reminder description cannot be empty."
+            "Reminder description cannot be empty or consist only of whitespaces."
         );
     }
+
+    
+    description_ = std::move(description);
 }
 
 std::uint64_t Reminder::id() const
@@ -67,10 +75,13 @@ ReminderRecurrence Reminder::recurrence() const
 
 void Reminder::update_description(std::string description)
 {
-    if (description.empty())
+    std::string check_desc = description;
+    check_desc.erase(std::remove_if(check_desc.begin(), check_desc.end(), ::isspace), check_desc.end());
+
+    if (check_desc.empty())
     {
         throw std::invalid_argument(
-            "Reminder description cannot be empty."
+            "Reminder description cannot be empty or consist only of whitespaces."
         );
     }
 
@@ -99,7 +110,7 @@ void Reminder::change_type(ReminderType type)
 
 void Reminder::change_recurrence(ReminderRecurrence recurrence)
 {
-    recurrence_ = recurrence;
+    recurrence_ = recurrence; 
 }
 
-} // namespace virtual_planner::domain
+} 
