@@ -1,11 +1,29 @@
 #include "virtual_planner/domain/entities/reminder.hpp"
+#include "virtual_planner/shared/errors.hpp"
 
-#include <stdexcept>
 #include <utility>
-#include <algorithm>
-#include <cctype>
 
 namespace virtual_planner::domain {
+
+namespace {
+
+bool is_blank(const std::string& value)
+{
+    return value.empty() ||
+           value.find_first_not_of(" \t\n\r\f\v") == std::string::npos;
+}
+
+void validate_description(const std::string& description)
+{
+    if (is_blank(description))
+    {
+        throw shared::DomainError(
+            "Reminder description cannot be empty or blank."
+        );
+    }
+}
+
+}
 
 Reminder::Reminder(
     std::uint64_t id,
@@ -17,25 +35,14 @@ Reminder::Reminder(
     ReminderRecurrence recurrence
 )
     : id_(id),
+      description_(std::move(description)),
       category_(category),
       date_(date),
       time_slot_(time_slot),
       type_(type),
       recurrence_(recurrence)
 {
-   
-    std::string check_desc = description;
-    check_desc.erase(std::remove_if(check_desc.begin(), check_desc.end(), ::isspace), check_desc.end());
-
-    if (check_desc.empty())
-    {
-        throw std::invalid_argument(
-            "Reminder description cannot be empty or consist only of whitespaces."
-        );
-    }
-
-    
-    description_ = std::move(description);
+    validate_description(description_);
 }
 
 std::uint64_t Reminder::id() const
@@ -75,16 +82,7 @@ ReminderRecurrence Reminder::recurrence() const
 
 void Reminder::update_description(std::string description)
 {
-    std::string check_desc = description;
-    check_desc.erase(std::remove_if(check_desc.begin(), check_desc.end(), ::isspace), check_desc.end());
-
-    if (check_desc.empty())
-    {
-        throw std::invalid_argument(
-            "Reminder description cannot be empty or consist only of whitespaces."
-        );
-    }
-
+    validate_description(description);
     description_ = std::move(description);
 }
 
@@ -110,7 +108,7 @@ void Reminder::change_type(ReminderType type)
 
 void Reminder::change_recurrence(ReminderRecurrence recurrence)
 {
-    recurrence_ = recurrence; 
+    recurrence_ = recurrence;
 }
 
-} 
+}

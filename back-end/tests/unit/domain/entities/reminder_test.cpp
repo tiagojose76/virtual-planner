@@ -3,7 +3,6 @@
 #include "support/expect.hpp"
 
 #include <chrono>
-#include <stdexcept>
 
 using namespace virtual_planner;
 
@@ -114,7 +113,7 @@ int main()
             domain::ReminderRecurrence::Once
         };
     }
-    catch (const std::exception&)
+    catch (const shared::DomainError&)
     {
         empty_constructor_rejected = true;
     }
@@ -138,7 +137,7 @@ int main()
             domain::ReminderRecurrence::Once
         };
     }
-    catch (const std::exception&)
+    catch (const shared::DomainError&)
     {
         blank_constructor_rejected = true;
     }
@@ -154,7 +153,7 @@ int main()
     {
         reminder.update_description("");
     }
-    catch (const std::exception&)
+    catch (const shared::DomainError&)
     {
         empty_update_rejected = true;
     }
@@ -170,7 +169,7 @@ int main()
     {
         reminder.update_description("   ");
     }
-    catch (const std::exception&)
+    catch (const shared::DomainError&)
     {
         blank_update_rejected = true;
     }
