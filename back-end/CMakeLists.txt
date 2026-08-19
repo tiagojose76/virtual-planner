@@ -63,6 +63,7 @@ include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/goals.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/tasks.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/reminders.cmake)
 include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/users.cmake)
+include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/persistence.cmake)
 
 if(VIRTUAL_PLANNER_WITH_POSTGRES)
   include(${VIRTUAL_PLANNER_CMAKE_DIR}/tests/postgres.cmake)
