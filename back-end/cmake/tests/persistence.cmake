@@ -15,3 +15,8 @@ virtual_planner_add_test(
   in_memory_reminder_repository_test
   unit/persistence/in_memory_reminder_repository_test.cpp
 )
+
+virtual_planner_add_test(
+  in_memory_user_repository_test
+  unit/persistence/in_memory_user_repository_test.cpp
+)
