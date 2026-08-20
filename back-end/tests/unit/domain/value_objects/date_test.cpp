@@ -106,5 +106,46 @@ int main()
     VP_EXPECT(throws_invalid_argument(29, 2, 2023), "day 29 should be rejected for February in a non-leap year");
     VP_EXPECT(throws_invalid_argument(30, 2, 2024), "day 30 should be rejected for February in a leap year");
 
+    // --- Operadores de comparacao --------------------------------------
+    const domain::Date same_as_date{15, 8, 2026};
+    const domain::Date earlier_day{14, 8, 2026};
+    const domain::Date later_day{16, 8, 2026};
+    const domain::Date earlier_month{15, 7, 2026};
+    const domain::Date later_month{15, 9, 2026};
+    const domain::Date earlier_year{15, 8, 2025};
+    const domain::Date later_year{15, 8, 2027};
+
+    // operator==
+    VP_EXPECT(date == same_as_date, "operator== should be true for equal dates");
+    VP_EXPECT(!(date == later_day), "operator== should be false for a different day");
+
+    // operator!=
+    VP_EXPECT(date != later_day, "operator!= should be true for a different day");
+    VP_EXPECT(!(date != same_as_date), "operator!= should be false for equal dates");
+
+    // operator< (ano, depois mes, depois dia)
+    VP_EXPECT(earlier_year < date, "operator< should compare year first");
+    VP_EXPECT(earlier_month < date, "operator< should compare month when year is equal");
+    VP_EXPECT(earlier_day < date, "operator< should compare day when year and month are equal");
+    VP_EXPECT(!(date < date), "operator< should be false for equal dates");
+    VP_EXPECT(!(later_day < date), "operator< should be false when the date is later");
+
+    // operator>
+    VP_EXPECT(later_year > date, "operator> should compare year first");
+    VP_EXPECT(later_month > date, "operator> should compare month when year is equal");
+    VP_EXPECT(later_day > date, "operator> should compare day when year and month are equal");
+    VP_EXPECT(!(date > date), "operator> should be false for equal dates");
+    VP_EXPECT(!(earlier_day > date), "operator> should be false when the date is earlier");
+
+    // operator<=
+    VP_EXPECT(earlier_day <= date, "operator<= should be true when the date is earlier");
+    VP_EXPECT(date <= same_as_date, "operator<= should be true for equal dates");
+    VP_EXPECT(!(later_day <= date), "operator<= should be false when the date is later");
+
+    // operator>=
+    VP_EXPECT(later_day >= date, "operator>= should be true when the date is later");
+    VP_EXPECT(date >= same_as_date, "operator>= should be true for equal dates");
+    VP_EXPECT(!(earlier_day >= date), "operator>= should be false when the date is earlier");
+
     return 0;
 }
