@@ -1,5 +1,4 @@
 # Testes do modulo Task. Registre aqui qualquer teste novo de Task.
-gi
 virtual_planner_add_test(
   date_test
   unit/domain/value_objects/date_test.cpp
