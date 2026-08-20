@@ -13,6 +13,9 @@ namespace virtual_planner::persistence {
 //
 // ReminderRepository nao expoe update, entao save faz upsert: substitui quem
 // ja tem o mesmo id e insere caso contrario.
+//
+// Nao e thread-safe: o vector interno nao tem lock nenhum. O chamador deve
+// serializar o acesso concorrente.
 class InMemoryReminderRepository final : public ReminderRepository
 {
 public:

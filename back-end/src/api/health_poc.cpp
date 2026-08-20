@@ -8,6 +8,8 @@
 // Os endpoints reais, o roteamento e a composicao com os casos de uso sao
 // escritos nas issues da Onda 2 (#29 / P-28 e seguintes). Nada aqui deve ser
 // reaproveitado como estrutura definitiva da camada de API.
+//
+// Este arquivo deve ser apagado quando a issue #29 (P-28) for concluida.
 
 #include <httplib.h>
 #include <nlohmann/json.hpp>

@@ -14,6 +14,9 @@ namespace virtual_planner::persistence {
 // TaskRepository nao expoe update, entao save faz upsert: substitui quem ja
 // tem o mesmo id e insere caso contrario. Sem isso nao existe como alterar
 // uma Task ja salva.
+//
+// Nao e thread-safe: o vector interno nao tem lock nenhum. O chamador deve
+// serializar o acesso concorrente.
 class InMemoryTaskRepository final : public TaskRepository
 {
 public:

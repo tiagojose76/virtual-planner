@@ -14,6 +14,9 @@ namespace virtual_planner::persistence {
 // Diferente dos demais, GoalRepository::save gera o id: o valor de
 // goal.id() recebido e ignorado e o id atribuido e devolvido ao chamador.
 // Serve tanto aos testes quanto a um modo de execucao sem banco.
+//
+// Nao e thread-safe: o vector interno nao tem lock nenhum. O chamador deve
+// serializar o acesso concorrente.
 class InMemoryGoalRepository final : public GoalRepository
 {
 public:
@@ -21,6 +24,15 @@ public:
     {
         const auto id = next_id_++;
 
+        // Reconstroi campo a campo em vez de copiar a entidade, porque
+        // Goal::id_ e privado sem setter e o id gerado aqui precisa
+        // sobrescrever o que veio em goal. Os outros tres repositorios
+        // fazem push_back da entidade inteira porque preservam o id.
+        // ADR-002 planeja adicionar user_id a Goal na Onda 3: quando isso
+        // acontecer, este e o repositorio que precisa ser revisitado. Uma
+        // mudanca de aridade no construtor de Goal quebra esta chamada em
+        // tempo de compilacao, entao o risco de esquecer o campo aqui e
+        // baixo.
         goals_.emplace_back(
             id,
             goal.description(),
