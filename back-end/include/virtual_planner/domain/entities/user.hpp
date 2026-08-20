@@ -2,29 +2,27 @@
 
 #include <string>
 #include <cstdint>
-#include <stdexcept>
 
-namespace virtual_planner::domain {
+namespace virtual_planner::domain
+{
+    class User
+    {
+    public:
+        User(std::uint64_t id, std::string name, std::string email);
 
-class User {
-private:
-    std::uint64_t id_;
-    std::string name_;
-    std::string email_;
+        [[nodiscard]] std::uint64_t id() const;
+        [[nodiscard]] const std::string& name() const;
+        [[nodiscard]] const std::string& email() const;
 
-    // Declaração das regras de validação
-    void validate_name(const std::string& name) const;
-    void validate_email(const std::string& email) const;
+        void update_name(std::string new_name);
+        void update_email(std::string new_email);
 
-public:
-    User(std::uint64_t id, std::string name, std::string email);
+    private:
+        std::uint64_t id_;
+        std::string name_;
+        std::string email_;
 
-    [[nodiscard]] std::uint64_t id() const;
-    [[nodiscard]] const std::string& name() const;
-    [[nodiscard]] const std::string& email() const;
-
-    void update_name(const std::string& new_name);
-    void update_email(const std::string& new_email);
-};
-
+        void validate_name(const std::string& name) const;
+        void validate_email(const std::string& email) const;
+    };
 } // namespace virtual_planner::domain
