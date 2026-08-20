@@ -8,3 +8,18 @@ virtual_planner_add_test(
   time_slot_test
   unit/domain/value_objects/time_slot_test.cpp
 )
+
+virtual_planner_add_test(
+  task_status_test
+  unit/domain/enums/task_status_test.cpp
+)
+
+virtual_planner_add_test(
+  priority_test
+  unit/domain/enums/priority_test.cpp
+)
+
+virtual_planner_add_test(
+  shift_test
+  unit/domain/enums/shift_test.cpp
+)
