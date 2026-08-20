@@ -23,3 +23,8 @@ virtual_planner_add_test(
   shift_test
   unit/domain/enums/shift_test.cpp
 )
+
+virtual_planner_add_test(
+  task_test
+  unit/domain/entities/task_test.cpp
+)
