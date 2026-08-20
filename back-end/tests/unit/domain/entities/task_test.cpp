@@ -1,5 +1,6 @@
 // P-16.2: cobertura de testes para virtual_planner::domain::Task.
 #include "virtual_planner/domain/entities/task.hpp"
+#include "virtual_planner/shared/errors.hpp"
 #include "support/expect.hpp"
 
 #include <chrono>
@@ -65,7 +66,7 @@ int main()
     VP_EXPECT(task.priority() == domain::Priority::Medium, "priority should match constructor value");
     VP_EXPECT(task.status() == domain::TaskStatus::Pending, "status should match constructor value");
 
-    // --- Construcao invalida: descricao vazia deve lancar ------------------
+    // --- Construcao invalida: descricao vazia deve lancar DomainError ------
     bool threw_on_empty_description = false;
     try
     {
@@ -79,11 +80,88 @@ int main()
             domain::TaskStatus::Pending
         };
     }
-    catch (const std::invalid_argument&)
+    catch (const shared::DomainError&)
     {
         threw_on_empty_description = true;
     }
     VP_EXPECT(threw_on_empty_description, "constructor should reject an empty description");
+
+    // --- Construcao invalida: descricao so com espacos deve lancar ---------
+    bool threw_on_blank_description = false;
+    try
+    {
+        const domain::Task invalid{
+            1,
+            "   ",
+            domain::Category::Work,
+            initial_date,
+            initial_time_slot,
+            domain::Priority::Low,
+            domain::TaskStatus::Pending
+        };
+    }
+    catch (const shared::DomainError&)
+    {
+        threw_on_blank_description = true;
+    }
+    VP_EXPECT(threw_on_blank_description, "constructor should reject a blank (whitespace-only) description");
+
+    // --- Construcao valida: espacos nas bordas com conteudo real sao aceitos
+    {
+        const domain::Task padded{
+            1,
+            " Study ",
+            domain::Category::Work,
+            initial_date,
+            initial_time_slot,
+            domain::Priority::Low,
+            domain::TaskStatus::Pending
+        };
+        VP_EXPECT(
+            padded.description() == " Study ",
+            "constructor should accept a non-blank description without trimming it"
+        );
+    }
+
+    // --- update_description: aceitacao --------------------------------
+    {
+        domain::Task subject = make_task();
+        subject.update_description("Study distributed systems");
+        VP_EXPECT(
+            subject.description() == "Study distributed systems",
+            "update_description should update description when given a non-blank value"
+        );
+    }
+
+    // --- update_description: rejeicao (vazia) ---------------------------
+    {
+        domain::Task subject = make_task();
+        bool threw = false;
+        try
+        {
+            subject.update_description("");
+        }
+        catch (const shared::DomainError&)
+        {
+            threw = true;
+        }
+        VP_EXPECT(threw, "update_description should reject an empty description");
+    }
+
+    // --- update_description: rejeicao (so espacos) -----------------------
+    {
+        domain::Task subject = make_task();
+        bool threw = false;
+        try
+        {
+            subject.update_description("   ");
+        }
+        catch (const shared::DomainError&)
+        {
+            threw = true;
+        }
+        VP_EXPECT(threw, "update_description should reject a blank (whitespace-only) description");
+    }
 
     // --- change_category -----------------------------------------------
     {
