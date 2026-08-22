@@ -20,42 +20,30 @@ void test_user_updates() {
 }
 
 void test_user_validation_rejections() {
-    // Testa rejeição de nome vazio
-    bool rejected_empty_name = false;
-    try { User user(1, "", "valido@example.com"); } 
-    catch (const std::invalid_argument&) { rejected_empty_name = true; }
-    VP_EXPECT(rejected_empty_name, "Deve rejeitar a criacao de usuario com nome vazio");
+    auto throws_invalid_argument = [](auto fn) {
+        try { fn(); return false; }
+        catch (const std::invalid_argument&) { return true; }
+    };
 
-    // Testa rejeição do construtor com e-mail vazio (Ponto 3 da issue)
-    bool rejected_empty_email_ctor = false;
-    try { User user(1, "Gabriel", ""); } 
-    catch (const std::invalid_argument&) { rejected_empty_email_ctor = true; }
-    VP_EXPECT(rejected_empty_email_ctor, "Deve rejeitar a criacao de usuario com email vazio");
+    VP_EXPECT(throws_invalid_argument([](){ User user(1, "", "valido@example.com"); }),
+              "Deve rejeitar a criacao de usuario com nome vazio");
 
-    // Testa rejeição de e-mail sem '@'
-    bool rejected_invalid_email = false;
-    try { User user(1, "Gabriel", "emailinvalido.com"); } 
-    catch (const std::invalid_argument&) { rejected_invalid_email = true; }
-    VP_EXPECT(rejected_invalid_email, "Deve rejeitar a criacao de usuario com email sem '@'");
+    VP_EXPECT(throws_invalid_argument([](){ User user(1, "Gabriel", ""); }),
+              "Deve rejeitar a criacao de usuario com email vazio");
 
-    // Testa rejeição em métodos de atualização
+    VP_EXPECT(throws_invalid_argument([](){ User user(1, "Gabriel", "emailinvalido.com"); }),
+              "Deve rejeitar a criacao de usuario com email sem '@'");
+
     User valid_user(1, "Gabriel", "gabriel@example.com");
-    
-    bool rejected_update_name = false;
-    try { valid_user.update_name(""); } 
-    catch (const std::invalid_argument&) { rejected_update_name = true; }
-    VP_EXPECT(rejected_update_name, "Deve rejeitar a atualizacao para um nome vazio");
 
-    // Testa update com e-mail vazio
-    bool rejected_update_email_empty = false;
-    try { valid_user.update_email(""); } 
-    catch (const std::invalid_argument&) { rejected_update_email_empty = true; }
-    VP_EXPECT(rejected_update_email_empty, "Deve rejeitar a atualizacao para um email vazio");
+    VP_EXPECT(throws_invalid_argument([&valid_user](){ valid_user.update_name(""); }),
+              "Deve rejeitar a atualizacao para um nome vazio");
 
-    bool rejected_update_email_no_at = false;
-    try { valid_user.update_email("sem-arroba"); } 
-    catch (const std::invalid_argument&) { rejected_update_email_no_at = true; }
-    VP_EXPECT(rejected_update_email_no_at, "Deve rejeitar a atualizacao para um email sem '@'");
+    VP_EXPECT(throws_invalid_argument([&valid_user](){ valid_user.update_email(""); }),
+              "Deve rejeitar a atualizacao para um email vazio");
+
+    VP_EXPECT(throws_invalid_argument([&valid_user](){ valid_user.update_email("sem-arroba"); }),
+              "Deve rejeitar a atualizacao para um email sem '@'");
 }
 
 int main() {

@@ -1,9 +1,9 @@
 #include "virtual_planner/domain/entities/user.hpp"
+
 #include <stdexcept>
 #include <utility>
 
-namespace virtual_planner::domain
-{
+namespace virtual_planner::domain {
     User::User(std::uint64_t id, std::string name, std::string email)
         : id_(id)
     {
@@ -50,9 +50,14 @@ namespace virtual_planner::domain
 
     void User::validate_email(const std::string& email) const
     {
-        if (email.empty() || email.find('@') == std::string::npos)
+        if (email.empty())
         {
-            throw std::invalid_argument("User email must contain '@' and cannot be empty.");
+            throw std::invalid_argument("User email cannot be empty.");
+        }
+
+        if (email.find('@') == std::string::npos)
+        {
+            throw std::invalid_argument("Invalid email.");
         }
     }
 } // namespace virtual_planner::domain
