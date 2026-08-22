@@ -2,6 +2,8 @@
 
 #include "virtual_planner/domain/entities/reminder.hpp"
 
+#include <stdexcept>
+
 namespace virtual_planner::application {
 
 CreateReminderUseCase::CreateReminderUseCase(
@@ -11,8 +13,13 @@ CreateReminderUseCase::CreateReminderUseCase(
 }
 
 std::uint64_t CreateReminderUseCase::execute(
-    const CreateReminderRequest& request)
+    const CreateReminderRequest& request) const
 {
+    if (repositorio_.find_by_id(request.id).has_value())
+    {
+        throw std::runtime_error("Lembrete já existe.");
+    }
+
     const domain::Reminder lembrete{
         request.id,
         request.description,

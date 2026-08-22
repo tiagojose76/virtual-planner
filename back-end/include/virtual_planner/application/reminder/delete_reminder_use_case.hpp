@@ -12,7 +12,7 @@ public:
     explicit DeleteReminderUseCase(
         persistence::ReminderRepository& repository);
 
-    void execute(std::uint64_t id);
+    void execute(std::uint64_t id) const;
 
 private:
     persistence::ReminderRepository& repositorio_;

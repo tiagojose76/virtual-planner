@@ -11,7 +11,7 @@ UpdateReminderUseCase::UpdateReminderUseCase(
 }
 
 void UpdateReminderUseCase::execute(
-    const UpdateReminderRequest& request)
+    const UpdateReminderRequest& request) const
 {
     const auto existente = repositorio_.find_by_id(request.id);
 

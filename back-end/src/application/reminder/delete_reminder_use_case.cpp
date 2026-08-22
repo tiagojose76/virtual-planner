@@ -10,7 +10,7 @@ DeleteReminderUseCase::DeleteReminderUseCase(
 {
 }
 
-void DeleteReminderUseCase::execute(std::uint64_t id)
+void DeleteReminderUseCase::execute(std::uint64_t id) const
 {
     if (!repositorio_.find_by_id(id).has_value())
     {

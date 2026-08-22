@@ -30,7 +30,7 @@ public:
         persistence::ReminderRepository& repository);
 
     [[nodiscard]] std::uint64_t execute(
-        const CreateReminderRequest& request);
+        const CreateReminderRequest& request) const;
 
 private:
     persistence::ReminderRepository& repositorio_;

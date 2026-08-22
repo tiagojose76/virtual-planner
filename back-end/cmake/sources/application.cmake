@@ -9,6 +9,9 @@ virtual_planner_add_sources(
   application/goal/change_goal_status_use_case.cpp
 )
 
+# Task
+# virtual_planner_add_sources(application/task/...)
+
 # Reminder
 virtual_planner_add_sources(
   application/reminder/create_reminder_use_case.cpp
@@ -16,3 +19,6 @@ virtual_planner_add_sources(
   application/reminder/list_reminders_use_case.cpp
   application/reminder/update_reminder_use_case.cpp
 )
+
+# User
+# virtual_planner_add_sources(application/user/...)

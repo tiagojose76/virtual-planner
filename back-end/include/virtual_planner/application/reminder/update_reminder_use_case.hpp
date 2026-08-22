@@ -29,7 +29,7 @@ public:
     explicit UpdateReminderUseCase(
         persistence::ReminderRepository& repository);
 
-    void execute(const UpdateReminderRequest& request);
+    void execute(const UpdateReminderRequest& request) const;
 
 private:
     persistence::ReminderRepository& repositorio_;
