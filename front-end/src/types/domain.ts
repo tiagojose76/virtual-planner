@@ -35,6 +35,25 @@ export type TaskStatus =
   | "Cancelled"
   | "Postponed";
 
+// Para aplicar a regra de sobreposição de horários (TimeSlot::overlaps)
+export interface TimeSlot {
+  date: string;
+  startMinutes: number;
+  endMinutes: number;
+}
+
+// Para controlar a navegação entre as 9 visões do Planner
+export type PlannerView =
+  | "calendar"
+  | "timeline"
+  | "category"
+  | "status"
+  | "duration-category"
+  | "duration-status"
+  | "duration-time"
+  | "priority"
+  | "all";
+
 export interface User {
   id: number;
   name: string;
