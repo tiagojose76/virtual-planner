@@ -1,4 +1,4 @@
-import { Task, Goal, Reminder } from "../../types/domain";
+import type { Task, Goal, Reminder } from "../../types/domain";
 import { mockTasks, mockGoals, mockReminders } from "../../mocks/seed";
 
 //simula tempo de resposta da internet
@@ -10,7 +10,7 @@ let currentGoals = [...mockGoals];
 let currentReminders = [...mockReminders];
 
 export const virtualPlannerApi = {
-  async getTasks(): Promise<task[]> {
+  async getTasks(): Promise<Task[]> {
     await delay(500);
     return [...currentTasks];
   },
@@ -129,5 +129,11 @@ export const virtualPlannerApi = {
   async deleteReminder(id: number): Promise<void> {
     await delay(300);
     currentReminders = currentReminders.filter((r) => r.id !== id);
+  },
+
+  async getTaskById(id: number): Promise<Task | null> {
+    await delay(300);
+    const task = currentTasks.find((t) => t.id === id);
+    return task ? { ...task } : null;
   },
 };
