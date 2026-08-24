@@ -112,10 +112,9 @@ int main()
             found,
             "find_all() must include the saved goal");
 
-        // Act: update()
-        //
-        // Migration 020 creates the goals table and migration 021 adds
-        // updated_at, which PostgresGoalRepository::update() modifies.
+        // Act: update() — this is the path that used to fail because the
+        // 001 schema had no updated_at column while the repository set it
+        // unconditionally (see migrations/002_add_goals_timestamps_and_checks.sql).
         domain::Goal updated_goal(
             id,
             "Finish C++ Planner (revised)",

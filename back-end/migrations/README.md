@@ -3,8 +3,8 @@
 Este diretório contém os scripts SQL versionados do PostgreSQL, aplicados na ordem numérica do prefixo do arquivo, por exemplo:
 
 ```text
-001_create_goals_table.sql
-002_add_goals_timestamps_and_checks.sql
+020_create_goals_table.sql
+021_add_goals_timestamps_and_checks.sql
 ```
 
 ## Convenção de numeração
@@ -31,7 +31,14 @@ ordem de aplicação fica determinada mesmo quando os PRs entram fora de ordem.
 
 ### Migrations anteriores à convenção
 
+<<<<<<< HEAD
 020_create_goals_table.sql e 021_add_goals_timestamps_and_checks.sql foram renumeradas a partir das migrations iniciais 001 e 002 para a faixa reservada a Goal. Elas não devem ser renumeradas novamente, pois podem já ter sido aplicadas em ambientes existentes.
+=======
+`020_create_goals_table.sql` e `021_add_goals_timestamps_and_checks.sql` são
+anteriores a esta convenção e permanecem na faixa base. Elas **não são
+renumeradas**: renomear uma migration já aplicada quebraria o registro em
+`schema_migrations`. Mudanças novas em `goals` usam a faixa 020–029.
+>>>>>>> 847a314 (chore: reserve Goal migration range)
 
 ### Regra de conflito
 
