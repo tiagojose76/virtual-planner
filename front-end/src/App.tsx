@@ -1,12 +1,45 @@
 import { useState, useEffect } from "react";
-import { AppShell } from "./components/AppShell";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router";
+import { AppShell } from "./components/layout/AppShell";
+
+import { TasksPage } from "./pages/TasksPage";
+import { TaskFormPage } from "./pages/TaskFormPage";
+import { GoalsPage } from "./pages/GoalsPage";
+import { GoalFormPage } from "./pages/GoalFormPage";
+import { RemindersPage } from "./pages/RemindersPage";
+import { ReminderFormPage } from "./pages/ReminderFormPage";
+import { PlannerPage } from "./pages/PlannerPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 type ThemeMode = "light" | "dark" | "system";
 
-export default function App() {
-  const [currentTab, setCurrentTab] = useState<string>("dashboard");
-  const [theme, setTheme] = useState<ThemeMode>("system");
+function DashboardView() {
+  return (
+    <div className="p-8 rounded-2xl bg-slate-900 border border-purple-900/30 shadow-xl transition-all duration-300">
+      <h3 className="text-xl font-bold text-slate-100 mb-2">
+        Visão Geral do Planejamento
+      </h3>
+      <p className="text-purple-300 text-sm">
+        Bem-vindo ao Virtual Planner. Utilize a barra lateral para navegar entre
+        Tarefas, Metas, Lembretes e o Calendário.
+      </p>
+    </div>
+  );
+}
 
+function MainLayout() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+
+  // Sincroniza o tema com o documento HTML
   useEffect(() => {
     const root = window.document.documentElement;
     const systemPrefersDark = window.matchMedia(
@@ -20,30 +53,53 @@ export default function App() {
     }
   }, [theme]);
 
-  const handleThemeChange = (newTheme: ThemeMode) => {
-    setTheme(newTheme);
+  // Mapeia a URL atual para a aba ativa do AppShell
+  const currentTab = location.pathname.split("/")[1] || "dashboard";
+
+  const handleTabChange = (tab: string) => {
+    navigate(tab === "dashboard" ? "/" : `/${tab}`);
   };
 
   const handleQuickCreate = () => {
-    alert("Abrindo modal de nova tarefa...");
+    navigate("/tasks/new");
   };
 
   return (
     <AppShell
       currentTab={currentTab}
-      setCurrentTab={setCurrentTab}
-      onQuickCreate={handleQuickCreate}
+      setCurrentTab={handleTabChange}
       theme={theme}
-      onThemeChange={handleThemeChange}
+      onThemeChange={setTheme}
+      onQuickCreate={handleQuickCreate}
     >
-      <div className="p-8 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
-        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-          Visão Geral
-        </h3>
-        <p className="text-slate-600 dark:text-slate-400 text-sm">
-          A moldura do Virtual Planner está pronta! O modo {theme} está ativado.
-        </p>
-      </div>
+      <Routes>
+        <Route path="/" element={<DashboardView />} />
+
+        <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/tasks/new" element={<TaskFormPage />} />
+        <Route path="/tasks/:id/edit" element={<TaskFormPage />} />
+
+        <Route path="/planner" element={<PlannerPage />} />
+
+        <Route path="/goals" element={<GoalsPage />} />
+        <Route path="/goals/new" element={<GoalFormPage />} />
+        <Route path="/goals/:id/edit" element={<GoalFormPage />} />
+
+        <Route path="/reminders" element={<RemindersPage />} />
+        <Route path="/reminders/new" element={<ReminderFormPage />} />
+        <Route path="/reminders/:id/edit" element={<ReminderFormPage />} />
+
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Routes>
     </AppShell>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <MainLayout />
+    </BrowserRouter>
   );
 }
