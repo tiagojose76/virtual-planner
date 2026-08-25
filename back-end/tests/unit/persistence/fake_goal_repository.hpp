@@ -21,7 +21,8 @@ public:
         goal.description(),
         goal.category(),
         goal.status(),
-        goal.period());
+        goal.period(),
+        goal.reference_date());
 
     return id;
 }
@@ -55,6 +56,24 @@ public:
     {
         return goals_;
     }
+
+    std::vector<domain::Goal> find_by_date_range(
+    const domain::Date& start_date,
+    const domain::Date& end_date) override
+{
+    std::vector<domain::Goal> result;
+
+    for (const auto& goal : goals_)
+    {
+        if (goal.reference_date() >= start_date &&
+            goal.reference_date() <= end_date)
+        {
+            result.push_back(goal);
+        }
+    }
+
+    return result;
+}
 
     void remove(std::uint64_t id) override
     {
