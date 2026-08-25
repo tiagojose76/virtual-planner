@@ -75,6 +75,24 @@ public:
         return goals_;
     }
 
+    std::vector<domain::Goal> find_by_date_range(
+    const domain::Date& start,
+    const domain::Date& end) override
+{
+    std::vector<domain::Goal> result;
+
+    for (const auto& goal : goals_)
+    {
+        if (goal.reference_date() >= start &&
+            goal.reference_date() <= end)
+        {
+            result.push_back(goal);
+        }
+    }
+
+    return result;
+}
+
     void remove(std::uint64_t id) override
     {
         goals_.erase(

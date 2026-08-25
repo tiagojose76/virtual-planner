@@ -9,9 +9,13 @@ ListGoalsUseCase::ListGoalsUseCase(
 }
 
 std::vector<domain::Goal>
-ListGoalsUseCase::execute() const
+ListGoalsUseCase::execute(
+    const domain::Date& start_date,
+    const domain::Date& end_date) const
 {
-    return repository_.find_all();
+    return repository_.find_by_date_range(
+        start_date,
+        end_date);
 }
 
 } // namespace virtual_planner::application

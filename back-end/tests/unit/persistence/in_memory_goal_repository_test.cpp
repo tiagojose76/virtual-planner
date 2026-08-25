@@ -57,6 +57,9 @@ int main()
 
     repository.update(edited);
 
+
+    
+
     const auto after_update = repository.find_by_id(first_id);
 
     VP_EXPECT(after_update.has_value(), "goal should still exist after update");

@@ -55,7 +55,8 @@ int main()
             "Finish C++ Planner",
             domain::Category::Study,
             domain::GoalStatus::InProgress,
-            domain::GoalPeriod::Weekly);
+            domain::GoalPeriod::Weekly,
+            domain::Date(10, 8, 2026));
 
         // Act
         const auto id = repository.save(goal);
@@ -81,6 +82,9 @@ int main()
         VP_EXPECT(
             saved_goal->period() == domain::GoalPeriod::Weekly,
             "saved goal period must match");
+        VP_EXPECT(
+            saved_goal->reference_date() == domain::Date(10, 8, 2026),
+            "saved goal reference date must match");
 
         // Assert find_all()
         const auto goals = repository.find_all();
@@ -103,7 +107,22 @@ int main()
             "Finish C++ Planner (revised)",
             domain::Category::PersonalProjects,
             domain::GoalStatus::Completed,
-            domain::GoalPeriod::Monthly);
+            domain::GoalPeriod::Monthly,
+            domain::Date(20, 8, 2026));
+
+        const auto goals_in_range =
+        repository.find_by_date_range(
+            domain::Date(15, 8, 2026),
+            domain::Date(25, 8, 2026));
+
+        VP_EXPECT(
+            goals_in_range.size() == 1,
+            "find_by_date_range() must return goals inside the range");
+
+        VP_EXPECT(
+            goals_in_range.front().id() == id,
+            "find_by_date_range() must return the correct goal");
+                
 
         repository.update(updated_goal);
 
@@ -130,6 +149,9 @@ int main()
         VP_EXPECT(
             reloaded_goal->period() == domain::GoalPeriod::Monthly,
             "update() must persist the new period");
+        VP_EXPECT(
+            reloaded_goal->reference_date() == domain::Date(20, 8, 2026),
+            "update() must persist the new reference date");
 
         // Cleanup
         repository.remove(id);
