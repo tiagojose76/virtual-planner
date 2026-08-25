@@ -84,7 +84,8 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
                 description,
                 category,
                 status,
-                period
+                period,
+                reference_date
             FROM goals
             WHERE id = $1
         )",

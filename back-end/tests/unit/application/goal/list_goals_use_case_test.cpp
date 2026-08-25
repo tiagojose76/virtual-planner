@@ -14,7 +14,8 @@ int main()
             "Study C++",
             domain::Category::Study,
             domain::GoalStatus::InProgress,
-            domain::GoalPeriod::Weekly));
+            domain::GoalPeriod::Weekly,
+            domain::Date(10, 8, 2026)));
 
     repository.save(
         domain::Goal(
@@ -22,7 +23,8 @@ int main()
             "Finish Planner",
             domain::Category::Work,
             domain::GoalStatus::InProgress,
-            domain::GoalPeriod::Monthly));
+            domain::GoalPeriod::Monthly,
+            domain::Date(10, 8, 2026)));
 
     application::ListGoalsUseCase use_case(repository);
 

@@ -21,5 +21,5 @@ virtual_planner_add_test(
 )
 virtual_planner_add_test(
   goal_test
-  unit/domain/goal_test.cpp
+  unit/domain/entities/goal_test.cpp
 )
