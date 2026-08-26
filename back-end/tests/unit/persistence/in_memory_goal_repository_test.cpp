@@ -37,7 +37,7 @@ int main()
     const domain::Goal second{
         0,
         "Run three times a week",
-        domain::Category::Health,   
+        domain::Category::Health,
         domain::GoalStatus::InProgress,
         domain::GoalPeriod::Weekly,
         domain::Date(15, 8, 2026)};
@@ -56,9 +56,6 @@ int main()
         domain::Date(20, 8, 2026)};
 
     repository.update(edited);
-
-
-    
 
     const auto after_update = repository.find_by_id(first_id);
 

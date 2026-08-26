@@ -13,19 +13,19 @@ class FakeGoalRepository final : public persistence::GoalRepository
 {
 public:
     std::uint64_t save(const domain::Goal& goal) override
-{
-    const auto id = next_id_++;
+    {
+        const auto id = next_id_++;
 
-    goals_.emplace_back(
-        id,
-        goal.description(),
-        goal.category(),
-        goal.status(),
-        goal.period(),
-        goal.reference_date());
+        goals_.emplace_back(
+            id,
+            goal.description(),
+            goal.category(),
+            goal.status(),
+            goal.period(),
+            goal.reference_date());
 
-    return id;
-}
+        return id;
+    }
 
     void update(const domain::Goal& goal) override
     {
@@ -58,22 +58,22 @@ public:
     }
 
     std::vector<domain::Goal> find_by_date_range(
-    const domain::Date& start_date,
-    const domain::Date& end_date) override
-{
-    std::vector<domain::Goal> result;
-
-    for (const auto& goal : goals_)
+        const domain::Date& start_date,
+        const domain::Date& end_date) override
     {
-        if (goal.reference_date() >= start_date &&
-            goal.reference_date() <= end_date)
-        {
-            result.push_back(goal);
-        }
-    }
+        std::vector<domain::Goal> result;
 
-    return result;
-}
+        for (const auto& goal : goals_)
+        {
+            if (goal.reference_date() >= start_date &&
+                goal.reference_date() <= end_date)
+            {
+                result.push_back(goal);
+            }
+        }
+
+        return result;
+    }
 
     void remove(std::uint64_t id) override
     {
@@ -89,9 +89,8 @@ public:
     }
 
 private:
-    private:
     std::vector<domain::Goal> goals_;
     std::uint64_t next_id_ = 1;
 };
-    
+
 } // namespace virtual_planner::tests

@@ -111,8 +111,7 @@ void Goal::mark_as_failed()
 
 void Goal::change_reference_date(const Date& reference_date)
 {
-    reference_date_ = reference_date;       
-
-}   
+    reference_date_ = reference_date;
 }
-// namespace virtual_planner::domain
+
+} // namespace virtual_planner::domain
