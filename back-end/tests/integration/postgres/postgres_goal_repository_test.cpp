@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <pqxx/pqxx>
 
 #include "virtual_planner/infrastructure/postgres/postgres_config.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
@@ -60,6 +61,27 @@ int main()
 
         // Act: save()
         const auto id = repository.save(goal);
+
+        {
+        pqxx::read_transaction transaction(database.connection());
+
+        auto result = transaction.exec(
+            R"(
+                SELECT user_id
+                FROM goals
+                WHERE id = $1
+            )",
+            pqxx::params{transaction, id}
+        );
+
+        VP_EXPECT(
+            !result.empty(),
+            "saved goal row must exist in PostgreSQL");
+
+        VP_EXPECT(
+            result.one_row()["user_id"].as<std::uint64_t>() == 1,
+            "saved goal must belong to the single user");
+        }
 
         // Assert save()
         VP_EXPECT(
