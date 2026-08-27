@@ -83,7 +83,7 @@ export function ReminderFormPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl"
+        className="bg-white dark:bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl"
       >
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-2">
@@ -113,10 +113,10 @@ export function ReminderFormPage() {
               disabled={isLoading}
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all disabled:opacity-50"
             >
-              <option value="General">General</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Deadline">Deadline</option>
-              <option value="Personal">Personal</option>
+              <option value="General">Geral</option>
+              <option value="Meeting">Reunião</option>
+              <option value="Deadline">Entrega</option>
+              <option value="Personal">Perssoal</option>
             </select>
           </div>
 

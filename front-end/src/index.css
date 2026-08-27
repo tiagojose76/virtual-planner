@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
+/* 1. Configuração de modo escuro (vindo da develop) */
 @custom-variant dark (.dark &);
 
-/* Estilos globais para tags HTML puras! */
+/* 2. Nossa paleta de cores (vindo da main) */
+@theme {
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-700: #6d28d9;
+}
+
+/* 3. Estilos globais para tags HTML puras (vindo da develop) */
 @layer base {
   body {
     @apply bg-white text-slate-900 antialiased;
@@ -11,4 +21,19 @@
   :is(.dark body) {
     @apply bg-slate-950 text-slate-100;
   }
+}
+
+/* 4. Estilos remanescentes do layout base (versão simplificada da main) */
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+  padding: 32px 20px;
+}
+
+.hero {
+  width: 170px;
 }

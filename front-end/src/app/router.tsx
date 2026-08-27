@@ -5,7 +5,7 @@ import {
   Route,
   useLocation,
   useNavigate,
-} from "react-router-dom";
+} from "react-router";
 import { AppShell } from "../components/layout/AppShell";
 
 // Importação das Páginas

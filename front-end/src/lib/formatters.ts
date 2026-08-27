@@ -18,6 +18,15 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   Study: "Estudos",
 };
 
+export const CATEGORY_COLORS: Record<Category, string> = {
+  College: "#3B82F6", // Blue
+  Work: "#F59E0B", // Amber
+  Health: "#10B981", // Green
+  Leisure: "#EC4899", // Pink
+  PersonalProjects: "#8B5CF6", // Purple (Identidade)
+  Study: "#6366F1", // Indigo
+};
+
 export const PRIORITY_LABELS: Record<Priority, string> = {
   Low: "Baixa",
   Medium: "Média",

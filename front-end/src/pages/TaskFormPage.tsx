@@ -10,6 +10,10 @@ export function TaskFormPage() {
   const navigate = useNavigate();
   const isEditing = Boolean(id);
   const [isLoading, setIsLoading] = useState(false);
+  const [timeMode, setTimeMode] = useState<"exact" | "shift">("exact");
+  const [shift, setShift] = useState<"Morning" | "Afternoon" | "Night">(
+    "Morning",
+  );
 
   const [formData, setFormData] = useState<TaskFormData>({
     description: "",
@@ -84,7 +88,7 @@ export function TaskFormPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-slate-900 border border-purple-900/30 rounded-2xl p-6 space-y-6 shadow-xl"
+        className="bg-white dark:bg-slate-900 border border-purple-900/30 rounded-2xl p-6 space-y-6 shadow-xl"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
@@ -111,12 +115,12 @@ export function TaskFormPage() {
               onChange={handleChange}
               className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
             >
-              <option value="College">College</option>
-              <option value="Work">Work</option>
-              <option value="Health">Health</option>
-              <option value="Leisure">Leisure</option>
-              <option value="PersonalProjects">Personal Projects</option>
-              <option value="Study">Study</option>
+              <option value="College">Faculdade</option>
+              <option value="Work">Trabalho</option>
+              <option value="Health">Saúde</option>
+              <option value="Leisure">Lazer</option>
+              <option value="PersonalProjects">Projetos Pessoais</option>
+              <option value="Study">Estuda</option>
             </select>
           </div>
 
@@ -134,36 +138,71 @@ export function TaskFormPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-purple-300 mb-2">
-              Início (Minutos)
-            </label>
-            <input
-              type="number"
-              name="startMinutes"
-              value={formData.startMinutes}
-              onChange={handleChange}
-              required
-              min={0}
-              max={1440}
-              className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
-            />
-          </div>
+          <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center gap-4 bg-slate-950 p-2 rounded-lg border border-purple-900/30 w-fit">
+              <button
+                type="button"
+                onClick={() => setTimeMode("exact")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeMode === "exact" ? "bg-purple-600 text-white shadow-md" : "text-slate-400 hover:text-purple-300"}`}
+              >
+                Horário Exato
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeMode("shift")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeMode === "shift" ? "bg-purple-600 text-white shadow-md" : "text-slate-400 hover:text-purple-300"}`}
+              >
+                Turno do Dia
+              </button>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-purple-300 mb-2">
-              Fim (Minutos)
-            </label>
-            <input
-              type="number"
-              name="endMinutes"
-              value={formData.endMinutes}
-              onChange={handleChange}
-              required
-              min={0}
-              max={1440}
-              className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
-            />
+            {timeMode === "exact" ? (
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-purple-300 mb-2">
+                    Início (Minutos)
+                  </label>
+                  <input
+                    type="number"
+                    name="startMinutes"
+                    value={formData.startMinutes}
+                    onChange={handleChange}
+                    min={0}
+                    max={1440}
+                    className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-purple-300 mb-2">
+                    Fim (Minutos)
+                  </label>
+                  <input
+                    type="number"
+                    name="endMinutes"
+                    value={formData.endMinutes}
+                    onChange={handleChange}
+                    min={0}
+                    max={1440}
+                    className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-purple-300 mb-2">
+                  Selecione o Turno
+                </label>
+                <select
+                  value={shift}
+                  onChange={(e) => setShift(e.target.value as any)}
+                  className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600"
+                >
+                  <option value="Morning">Manhã</option>
+                  <option value="Afternoon">Tarde</option>
+                  <option value="Night">Noite</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div>
@@ -176,9 +215,9 @@ export function TaskFormPage() {
               onChange={handleChange}
               className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
             >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
+              <option value="Low">Baixa</option>
+              <option value="Medium">Media</option>
+              <option value="High">Alta</option>
             </select>
           </div>
 
@@ -192,11 +231,11 @@ export function TaskFormPage() {
               onChange={handleChange}
               className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600"
             >
-              <option value="Pending">Pending</option>
-              <option value="Executed">Executed</option>
-              <option value="PartiallyExecuted">Partially Executed</option>
-              <option value="Cancelled">Cancelled</option>
-              <option value="Postponed">Postponed</option>
+              <option value="Pending">Pendente</option>
+              <option value="Executed">Executada</option>
+              <option value="PartiallyExecuted">Parcialmente Executada</option>
+              <option value="Cancelled">Cancelada</option>
+              <option value="Postponed">Adiada</option>
             </select>
           </div>
         </div>

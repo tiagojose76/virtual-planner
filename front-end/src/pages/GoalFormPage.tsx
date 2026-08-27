@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { SubmitEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import type { Goal } from "../types/domain";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
@@ -45,7 +46,7 @@ export function GoalFormPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -79,7 +80,7 @@ export function GoalFormPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-slate-900 border border-purple-900/30 rounded-2xl p-6 space-y-6 shadow-xl"
+        className="bg-white dark:bg-slate-900 border border-purple-900/30 rounded-2xl p-6 space-y-6 shadow-xl"
       >
         <div>
           <label className="block text-sm font-medium text-purple-300 mb-2">
@@ -109,12 +110,12 @@ export function GoalFormPage() {
               disabled={isLoading}
               className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all disabled:opacity-50"
             >
-              <option value="College">College</option>
-              <option value="Work">Work</option>
-              <option value="Health">Health</option>
-              <option value="Leisure">Leisure</option>
-              <option value="PersonalProjects">Personal Projects</option>
-              <option value="Study">Study</option>
+              <option value="College">Faculdade</option>
+              <option value="Work">Trabalho</option>
+              <option value="Health">Saúde</option>
+              <option value="Leisure">Lazer</option>
+              <option value="PersonalProjects">Projetos Pessoais</option>
+              <option value="Study">Estudo</option>
             </select>
           </div>
 
@@ -129,9 +130,9 @@ export function GoalFormPage() {
               disabled={isLoading}
               className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all disabled:opacity-50"
             >
-              <option value="Weekly">Weekly</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Yearly">Yearly</option>
+              <option value="Weekly">Semanal</option>
+              <option value="Monthly">Mensal</option>
+              <option value="Yearly">Anual</option>
             </select>
           </div>
 
@@ -146,10 +147,12 @@ export function GoalFormPage() {
               disabled={isLoading}
               className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all disabled:opacity-50"
             >
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Partially Completed">Partially Completed</option>
-              <option value="Failed">Failed</option>
+              <option value="In Progress">Em Andamento</option>
+              <option value="Completed">Concluida</option>
+              <option value="Partially Completed">
+                Parcialmente Concluída
+              </option>
+              <option value="Failed">Falhou</option>
             </select>
           </div>
         </div>

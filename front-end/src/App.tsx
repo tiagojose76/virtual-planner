@@ -8,6 +8,7 @@ import {
 } from "react-router";
 import { AppShell } from "./components/layout/AppShell";
 
+import { DashboardPage } from "./pages/DashboardPage";
 import { TasksPage } from "./pages/TasksPage";
 import { TaskFormPage } from "./pages/TaskFormPage";
 import { GoalsPage } from "./pages/GoalsPage";
@@ -22,7 +23,7 @@ type ThemeMode = "light" | "dark" | "system";
 
 function DashboardView() {
   return (
-    <div className="p-8 rounded-2xl bg-slate-900 border border-purple-900/30 shadow-xl transition-all duration-300">
+    <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-purple-900/30 shadow-xl transition-all duration-300">
       <h3 className="text-xl font-bold text-slate-100 mb-2">
         Visão Geral do Planejamento
       </h3>
@@ -73,7 +74,7 @@ function MainLayout() {
       onQuickCreate={handleQuickCreate}
     >
       <Routes>
-        <Route path="/" element={<DashboardView />} />
+        <Route path="/" element={<DashboardPage />} />
 
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/tasks/new" element={<TaskFormPage />} />

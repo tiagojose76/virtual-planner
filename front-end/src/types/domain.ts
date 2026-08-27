@@ -65,10 +65,12 @@ export interface Task {
   description: string;
   category: Category;
   date: string; // YYYY-MM-DD
-  startMinutes: number;
-  endMinutes: number;
+  startMinutes?: number;
+  endMinutes?: number;
+  shift?: Shift;
   priority: Priority;
   status: TaskStatus;
+  color?: string;
 }
 
 export interface Goal {
@@ -89,3 +91,5 @@ export interface Reminder {
   type: ReminderType;
   recurrence: ReminderRecurrence;
 }
+
+export type CategoryColorMap = Record<Category, string>;
