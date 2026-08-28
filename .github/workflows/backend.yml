@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Debug primeiro: build padrão sem otimizações.
       - name: Configure (Debug)
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # O build padrão é offline e não compila nem a serialização compartilhada
       # (P-29.0) nem o servidor (P-28): as duas dependem de bibliotecas baixadas
@@ -121,7 +121,7 @@ jobs:
       LIBPQXX_VERSION: "8.0.2"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # O adapter usa a API libpqxx 8.x: pqxx::params{transaction, ...},
       # result::one_row() e result::no_rows(). Essas APIs NÃO existem no
@@ -139,7 +139,7 @@ jobs:
 
       - name: Cache libpqxx ${{ env.LIBPQXX_VERSION }}
         id: cache-libpqxx
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /opt/libpqxx
           key: libpqxx-${{ env.LIBPQXX_VERSION }}-${{ runner.os }}-ubuntu-24.04
