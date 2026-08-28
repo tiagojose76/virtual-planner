@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <pqxx/pqxx>
 
 #include "virtual_planner/infrastructure/postgres/postgres_config.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
@@ -61,27 +60,6 @@ int main()
 
         // Act: save()
         const auto id = repository.save(goal);
-
-        {
-        pqxx::read_transaction transaction(database.connection());
-
-        auto result = transaction.exec(
-            R"(
-                SELECT user_id
-                FROM goals
-                WHERE id = $1
-            )",
-            pqxx::params{transaction, id}
-        );
-
-        VP_EXPECT(
-            !result.empty(),
-            "saved goal row must exist in PostgreSQL");
-
-        VP_EXPECT(
-            result.one_row()["user_id"].as<std::uint64_t>() == 1,
-            "saved goal must belong to the single user");
-        }
 
         // Assert save()
         VP_EXPECT(
@@ -203,6 +181,44 @@ int main()
         VP_EXPECT(
             found_in_range,
             "find_by_date_range() must include the updated goal");
+
+        // Act: query with the goal exactly on the lower boundary.
+        const auto goals_on_start_boundary =
+            repository.find_by_date_range(
+                domain::Date(20, 8, 2026),
+                domain::Date(25, 8, 2026));
+
+        // Assert: the lower boundary is inclusive.
+        const auto found_on_start_boundary = std::any_of(
+            goals_on_start_boundary.begin(),
+            goals_on_start_boundary.end(),
+            [id](const domain::Goal& current)
+            {
+                return current.id() == id;
+            });
+
+        VP_EXPECT(
+            found_on_start_boundary,
+            "find_by_date_range() must include the start boundary");
+
+        // Act: query with the goal exactly on the upper boundary.
+        const auto goals_on_end_boundary =
+            repository.find_by_date_range(
+                domain::Date(15, 8, 2026),
+                domain::Date(20, 8, 2026));
+
+        // Assert: the upper boundary is inclusive.
+        const auto found_on_end_boundary = std::any_of(
+            goals_on_end_boundary.begin(),
+            goals_on_end_boundary.end(),
+            [id](const domain::Goal& current)
+            {
+                return current.id() == id;
+            });
+
+        VP_EXPECT(
+            found_on_end_boundary,
+            "find_by_date_range() must include the end boundary");
 
         // Assert that the same goal is outside another range.
         const auto goals_outside_range =

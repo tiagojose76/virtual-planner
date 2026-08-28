@@ -1,7 +1,5 @@
 #include "virtual_planner/domain/entities/goal.hpp"
-#include "support/expect.hpp"
-#include "virtual_planner/domain/value_objects/date.hpp"
-
+#include "../../support/expect.hpp"
 
 using namespace virtual_planner::domain;
 
@@ -13,7 +11,7 @@ int main()
         Category::Study,
         GoalStatus::InProgress,
         GoalPeriod::Weekly,
-        Date(10,8,2026)
+        Date(10, 8, 2026)
     );
 
     // Constructor and getters
@@ -44,9 +42,9 @@ int main()
     );
 
     VP_EXPECT(
-    goal.reference_date() == Date(10, 8, 2026),
-    "goal reference date should be initialized correctly"
-);
+        goal.reference_date() == Date(10, 8, 2026),
+        "goal reference date should be initialized correctly"
+    );
 
     // Description
 
@@ -73,6 +71,15 @@ int main()
     VP_EXPECT(
         goal.period() == GoalPeriod::Monthly,
         "change_period should change the goal period"
+    );
+
+    // Reference date
+
+    goal.change_reference_date(Date(20, 8, 2026));
+
+    VP_EXPECT(
+        goal.reference_date() == Date(20, 8, 2026),
+        "change_reference_date should change the goal reference date"
     );
 
     // Status

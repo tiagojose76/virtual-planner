@@ -13,9 +13,6 @@ namespace virtual_planner::infrastructure::postgres {
 namespace
 {
 
-constexpr std::uint64_t single_user_id = 1;
-
-
 std::string date_to_postgres(const domain::Date& date)
 {
     std::ostringstream stream;
@@ -29,18 +26,12 @@ std::string date_to_postgres(const domain::Date& date)
     return stream.str();
 }
 
-domain::Date date_from_postgres(const std::string& value)
+domain::Date date_from_postgres(const pqxx::row_ref& row)
 {
-    const auto year = static_cast<std::uint32_t>(
-        std::stoul(value.substr(0, 4)));
-
-    const auto month = static_cast<std::uint32_t>(
-        std::stoul(value.substr(5, 2)));
-
-    const auto day = static_cast<std::uint32_t>(
-        std::stoul(value.substr(8, 2)));
-
-    return domain::Date(day, month, year);
+    return domain::Date(
+        row["reference_date_day"].as<std::uint32_t>(),
+        row["reference_date_month"].as<std::uint32_t>(),
+        row["reference_date_year"].as<std::uint32_t>());
 }
 
 } // namespace
@@ -64,10 +55,9 @@ std::uint64_t PostgresGoalRepository::save(
                 category,
                 status,
                 period,
-                reference_date,
-                user_id
+                reference_date
             )
-            VALUES ($1,$2,$3,$4,$5,$6)
+            VALUES ($1,$2,$3,$4,$5)
             RETURNING id
         )",
         pqxx::params{
@@ -76,8 +66,7 @@ std::uint64_t PostgresGoalRepository::save(
             to_string(goal.category()),
             to_string(goal.status()),
             to_string(goal.period()),
-            date_to_postgres(goal.reference_date()),
-            single_user_id
+            date_to_postgres(goal.reference_date())
         });
 
     const auto id =
@@ -104,7 +93,6 @@ void PostgresGoalRepository::update(
                 reference_date=$5,
                 updated_at=CURRENT_TIMESTAMP
             WHERE id=$6
-            AND user_id=$7
         )",
         pqxx::params{
             transaction,
@@ -113,8 +101,7 @@ void PostgresGoalRepository::update(
             to_string(goal.status()),
             to_string(goal.period()),
             date_to_postgres(goal.reference_date()),
-            goal.id(),
-            single_user_id
+            goal.id()
         }).no_rows();
 
     transaction.commit();
@@ -134,12 +121,16 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
                 category,
                 status,
                 period,
-                reference_date
+                EXTRACT(DAY FROM reference_date)::INTEGER
+                    AS reference_date_day,
+                EXTRACT(MONTH FROM reference_date)::INTEGER
+                    AS reference_date_month,
+                EXTRACT(YEAR FROM reference_date)::INTEGER
+                    AS reference_date_year
             FROM goals
             WHERE id = $1
-              AND user_id = $2
         )",
-        pqxx::params{transaction, id, single_user_id}
+        pqxx::params{transaction, id}
     );
 
     if (result.empty())
@@ -158,8 +149,7 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
             row["status"].as<std::string>()),
         domain::goal_period_from_string(
             row["period"].as<std::string>()),
-        date_from_postgres(
-            row["reference_date"].as<std::string>())
+        date_from_postgres(row)
     );
 }
 
@@ -177,12 +167,15 @@ PostgresGoalRepository::find_all()
                 category,
                 status,
                 period,
-                reference_date
+                EXTRACT(DAY FROM reference_date)::INTEGER
+                    AS reference_date_day,
+                EXTRACT(MONTH FROM reference_date)::INTEGER
+                    AS reference_date_month,
+                EXTRACT(YEAR FROM reference_date)::INTEGER
+                    AS reference_date_year
             FROM goals
-            WHERE user_id = $1
             ORDER BY id
-        )",
-        pqxx::params{transaction, single_user_id}
+        )"
     );
 
     std::vector<domain::Goal> goals;
@@ -200,8 +193,7 @@ PostgresGoalRepository::find_all()
                 row["status"].as<std::string>()),
             domain::goal_period_from_string(
                 row["period"].as<std::string>()),
-            date_from_postgres(
-                row["reference_date"].as<std::string>())
+            date_from_postgres(row)
         );
     }
 
@@ -224,16 +216,19 @@ PostgresGoalRepository::find_by_date_range(
                 category,
                 status,
                 period,
-                reference_date
+                EXTRACT(DAY FROM reference_date)::INTEGER
+                    AS reference_date_day,
+                EXTRACT(MONTH FROM reference_date)::INTEGER
+                    AS reference_date_month,
+                EXTRACT(YEAR FROM reference_date)::INTEGER
+                    AS reference_date_year
             FROM goals
-            WHERE user_id = $1
-              AND reference_date >= $2
-              AND reference_date <= $3
+            WHERE reference_date >= $1
+              AND reference_date <= $2
             ORDER BY reference_date, id
         )",
         pqxx::params{
             transaction,
-            single_user_id,
             date_to_postgres(start),
             date_to_postgres(end)
         }
@@ -254,8 +249,7 @@ PostgresGoalRepository::find_by_date_range(
                 row["status"].as<std::string>()),
             domain::goal_period_from_string(
                 row["period"].as<std::string>()),
-            date_from_postgres(
-                row["reference_date"].as<std::string>())
+            date_from_postgres(row)
         );
     }
 
@@ -267,8 +261,9 @@ void PostgresGoalRepository::remove(
 {
     pqxx::work transaction(database_.connection());
 
-    transaction.exec("DELETE FROM goals WHERE id=$1 AND user_id=$2",
-        pqxx::params{transaction, id, single_user_id}).no_rows();
+    transaction.exec(
+        "DELETE FROM goals WHERE id=$1",
+        pqxx::params{transaction, id}).no_rows();
 
     transaction.commit();
 }
