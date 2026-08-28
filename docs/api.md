@@ -254,10 +254,11 @@ Exemplo:
   "period": "Weekly",
   "reference_date": "2026-08-28"
 }
+```
 
 | Campo | Tipo JSON | Significado |
 |---|---|---|
-| `id` | inteiro | Identificador da meta |
+| `id` | inteiro sem sinal | Identificador da meta |
 | `description` | string | Descrição da meta |
 | `category` | string | `Category`, usando a representação compartilhada |
 | `status` | string | `GoalStatus`, usando a representação compartilhada |
