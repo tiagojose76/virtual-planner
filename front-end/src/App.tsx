@@ -21,20 +21,6 @@ import { SettingsPage } from "./pages/SettingsPage";
 
 type ThemeMode = "light" | "dark" | "system";
 
-function DashboardView() {
-  return (
-    <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-purple-900/30 shadow-xl transition-all duration-300">
-      <h3 className="text-xl font-bold text-slate-100 mb-2">
-        Visão Geral do Planejamento
-      </h3>
-      <p className="text-purple-300 text-sm">
-        Bem-vindo ao Virtual Planner. Utilize a barra lateral para navegar entre
-        Tarefas, Metas, Lembretes e o Calendário.
-      </p>
-    </div>
-  );
-}
-
 function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import type { Task } from "../types/domain";
+import type { Shift, Task } from "../types/domain";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
+import { formatDateForInput } from "../lib/formatters";
 
 export type TaskFormData = Omit<Task, "id">;
 
@@ -9,16 +10,15 @@ export function TaskFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [timeMode, setTimeMode] = useState<"exact" | "shift">("exact");
-  const [shift, setShift] = useState<"Morning" | "Afternoon" | "Night">(
-    "Morning",
-  );
+  const [shift, setShift] = useState<Shift>("Morning");
 
   const [formData, setFormData] = useState<TaskFormData>({
     description: "",
     category: "Study",
-    date: new Date().toISOString().split("T")[0],
+    date: formatDateForInput(),
     startMinutes: 480,
     endMinutes: 540,
     priority: "Medium",
@@ -27,14 +27,28 @@ export function TaskFormPage() {
 
   useEffect(() => {
     if (isEditing && id) {
-      setIsLoading(true);
       virtualPlannerApi
         .getTasks()
         .then((tasks) => {
           const taskFound = tasks.find((t) => t.id === Number(id));
           if (taskFound) {
-            const { id: _, ...dataWithoutId } = taskFound;
-            setFormData(dataWithoutId);
+            setFormData({
+              description: taskFound.description,
+              category: taskFound.category,
+              date: taskFound.date,
+              startMinutes: taskFound.startMinutes,
+              endMinutes: taskFound.endMinutes,
+              shift: taskFound.shift,
+              priority: taskFound.priority,
+              status: taskFound.status,
+              color: taskFound.color,
+            });
+            if (taskFound.shift) {
+              setShift(taskFound.shift);
+              setTimeMode("shift");
+            } else {
+              setTimeMode("exact");
+            }
           }
         })
         .catch((err) => console.error("Erro ao carregar tarefa:", err))
@@ -57,12 +71,39 @@ export function TaskFormPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const commonTaskData = {
+      description: formData.description,
+      category: formData.category,
+      date: formData.date,
+      priority: formData.priority,
+      status: formData.status,
+      color: formData.color,
+    };
+
+    let taskPayload: TaskFormData;
+    if (timeMode === "shift") {
+      taskPayload = { ...commonTaskData, shift };
+    } else {
+      const { startMinutes, endMinutes } = formData;
+      if (
+        startMinutes === undefined ||
+        endMinutes === undefined ||
+        startMinutes >= endMinutes
+      ) {
+        setValidationError("O horário final deve ser posterior ao horário inicial.");
+        return;
+      }
+      taskPayload = { ...commonTaskData, startMinutes, endMinutes };
+    }
+
+    setValidationError(null);
     setIsLoading(true);
     try {
       if (isEditing && id) {
-        await virtualPlannerApi.updateTask(Number(id), formData);
+        await virtualPlannerApi.updateTask(Number(id), taskPayload);
       } else {
-        await virtualPlannerApi.createTask(formData);
+        await virtualPlannerApi.createTask(taskPayload);
       }
       navigate("/tasks");
     } catch (error) {
@@ -142,7 +183,14 @@ export function TaskFormPage() {
             <div className="flex items-center gap-4 bg-slate-950 p-2 rounded-lg border border-purple-900/30 w-fit">
               <button
                 type="button"
-                onClick={() => setTimeMode("exact")}
+                onClick={() => {
+                  setTimeMode("exact");
+                  setFormData((previous) => ({
+                    ...previous,
+                    startMinutes: previous.startMinutes ?? 480,
+                    endMinutes: previous.endMinutes ?? 540,
+                  }));
+                }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeMode === "exact" ? "bg-purple-600 text-white shadow-md" : "text-slate-400 hover:text-purple-300"}`}
               >
                 Horário Exato
@@ -165,10 +213,11 @@ export function TaskFormPage() {
                   <input
                     type="number"
                     name="startMinutes"
-                    value={formData.startMinutes}
+                    value={formData.startMinutes ?? ""}
                     onChange={handleChange}
                     min={0}
                     max={1440}
+                    required
                     className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600"
                   />
                 </div>
@@ -179,10 +228,11 @@ export function TaskFormPage() {
                   <input
                     type="number"
                     name="endMinutes"
-                    value={formData.endMinutes}
+                    value={formData.endMinutes ?? ""}
                     onChange={handleChange}
                     min={0}
                     max={1440}
+                    required
                     className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600"
                   />
                 </div>
@@ -194,16 +244,31 @@ export function TaskFormPage() {
                 </label>
                 <select
                   value={shift}
-                  onChange={(e) => setShift(e.target.value as any)}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    if (
+                      value === "Morning" ||
+                      value === "Afternoon" ||
+                      value === "Evening"
+                    ) {
+                      setShift(value);
+                    }
+                  }}
                   className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600"
                 >
                   <option value="Morning">Manhã</option>
                   <option value="Afternoon">Tarde</option>
-                  <option value="Night">Noite</option>
+                  <option value="Evening">Noite</option>
                 </select>
               </div>
             )}
           </div>
+
+          {validationError && (
+            <p className="md:col-span-2 text-sm text-red-400" role="alert">
+              {validationError}
+            </p>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-purple-300 mb-2">

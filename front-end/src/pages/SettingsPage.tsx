@@ -34,18 +34,20 @@ export function SettingsPage() {
           </h3>
           <ul className="space-y-4">
             <li className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
               <div>
                 <p className="text-sm font-medium text-gray-200">API Status</p>
-                <p className="text-xs text-gray-500">Operacional (42ms)</p>
+                <p className="text-xs text-gray-500">
+                  Não verificado (dados simulados)
+                </p>
               </div>
             </li>
             <li className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
               <div>
                 <p className="text-sm font-medium text-gray-200">PostgreSQL</p>
                 <p className="text-xs text-gray-500">
-                  Conectado (ConPool: 4/10)
+                  Não configurado no frontend
                 </p>
               </div>
             </li>

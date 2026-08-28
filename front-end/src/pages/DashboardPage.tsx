@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
+import { formatDateForInput } from "../lib/formatters";
 import type { Task, Goal, Reminder } from "../types/domain";
 
 export function DashboardPage() {
@@ -8,8 +10,7 @@ export function DashboardPage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Data fixa para bater com os nossos mocks (apenas para testes)
-  const TODAY = "2026-08-20";
+  const today = formatDateForInput();
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -37,10 +38,9 @@ export function DashboardPage() {
   }, []);
 
   // Lógica de Negócio: Filtragem de dados com complexidade O(N)
-  const todayTasks = tasks.filter((t) => t.date === TODAY);
-  const pendingTasks = tasks.filter((t) => t.status === "Pending");
+  const todayTasks = tasks.filter((t) => t.date === today);
   const inProgressGoals = goals.filter((g) => g.status === "In Progress");
-  const todayReminders = reminders.filter((r) => r.date === TODAY);
+  const todayReminders = reminders.filter((r) => r.date === today);
 
   const completedTasksCount = todayTasks.filter(
     (t) => t.status === "Executed",
@@ -71,12 +71,18 @@ export function DashboardPage() {
 
         {/* Botões de Ação Rápida */}
         <div className="flex gap-3">
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+          <Link
+            to="/tasks/new"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          >
             + Nova Tarefa
-          </button>
-          <button className="border border-purple-500 text-purple-400 hover:bg-purple-500/10 px-4 py-2 rounded-md font-medium transition-colors">
+          </Link>
+          <Link
+            to="/goals/new"
+            className="border border-purple-500 text-purple-400 hover:bg-purple-500/10 px-4 py-2 rounded-md font-medium transition-colors"
+          >
             + Nova Meta
-          </button>
+          </Link>
         </div>
       </header>
 
