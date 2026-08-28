@@ -10,6 +10,9 @@ using namespace virtual_planner;
 
 namespace {
 
+// O id so existe na assinatura porque Reminder o exige no construtor; o
+// repositorio o descarta e gera o seu (issue #90). Os testes que precisam do
+// id usam o valor devolvido por save.
 domain::Reminder criar_lembrete(
     std::uint64_t id,
     domain::Date data,
@@ -133,20 +136,27 @@ int main()
 
     {
         persistence::InMemoryReminderRepository repositorio;
-        repositorio.save(criar_lembrete(2, domain::Date{20, 8, 2026}, domain::ReminderType::Study, domain::ReminderRecurrence::Once, std::chrono::hours{9}));
-        repositorio.save(criar_lembrete(3, domain::Date{20, 8, 2026}, domain::ReminderType::Study, domain::ReminderRecurrence::Once, std::chrono::hours{8}));
-        repositorio.save(criar_lembrete(1, domain::Date{20, 8, 2026}, domain::ReminderType::Study, domain::ReminderRecurrence::Once, std::chrono::hours{9}));
+
+        // O id agora vem do repositorio (issue #90), entao o teste guarda o
+        // que save devolveu em vez de escolher os valores. A ordem de
+        // insercao e proposital: o das 8h entra no meio, para que passar no
+        // teste dependa da ordenacao e nao da ordem de chegada.
+        const auto id_primeiro_as_nove = repositorio.save(criar_lembrete(0, domain::Date{20, 8, 2026}, domain::ReminderType::Study, domain::ReminderRecurrence::Once, std::chrono::hours{9}));
+        const auto id_as_oito = repositorio.save(criar_lembrete(0, domain::Date{20, 8, 2026}, domain::ReminderType::Study, domain::ReminderRecurrence::Once, std::chrono::hours{8}));
+        const auto id_segundo_as_nove = repositorio.save(criar_lembrete(0, domain::Date{20, 8, 2026}, domain::ReminderType::Study, domain::ReminderRecurrence::Once, std::chrono::hours{9}));
         application::ListRemindersUseCase listar(repositorio);
+
+        VP_EXPECT(id_primeiro_as_nove < id_segundo_as_nove, "os ids gerados devem crescer na ordem de insercao");
 
         const auto tamanho_antes = repositorio.find_all().size();
         const auto ocorrencias = listar.execute(janela(domain::Date{20, 8, 2026}, domain::Date{20, 8, 2026}));
 
         VP_EXPECT(ocorrencias.size() == 3, "uma janela inclusiva de um dia deve incluir todas as ocorrências correspondentes");
-        VP_EXPECT(ocorrencias[0].reminder.id() == 3, "os resultados devem ser ordenados pelo horário inicial após a data");
-        VP_EXPECT(ocorrencias[1].reminder.id() == 1, "os resultados devem usar o ID como desempate final");
-        VP_EXPECT(ocorrencias[2].reminder.id() == 2, "os resultados devem usar o ID como desempate final");
+        VP_EXPECT(ocorrencias[0].reminder.id() == id_as_oito, "os resultados devem ser ordenados pelo horário inicial após a data");
+        VP_EXPECT(ocorrencias[1].reminder.id() == id_primeiro_as_nove, "os resultados devem usar o ID como desempate final");
+        VP_EXPECT(ocorrencias[2].reminder.id() == id_segundo_as_nove, "os resultados devem usar o ID como desempate final");
         VP_EXPECT(repositorio.find_all().size() == tamanho_antes, "a expansão não deve adicionar entidades ao repositório");
-        VP_EXPECT((repositorio.find_by_id(1)->date() == domain::Date{20, 8, 2026}), "a expansão deve preservar as datas-base persistidas");
+        VP_EXPECT((repositorio.find_by_id(id_as_oito)->date() == domain::Date{20, 8, 2026}), "a expansão deve preservar as datas-base persistidas");
     }
 
     {

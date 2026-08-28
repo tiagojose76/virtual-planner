@@ -13,8 +13,11 @@ using namespace virtual_planner;
 int main()
 {
     persistence::InMemoryReminderRepository repositorio;
-    repositorio.save(domain::Reminder{
-        7,
+
+    // O id vem do repositorio (issue #90); a entidade entra com 0 e o valor
+    // gerado e o que vale daqui em diante.
+    const auto id = repositorio.save(domain::Reminder{
+        0,
         "Original",
         domain::Category::Study,
         domain::Date{20, 8, 2026},
@@ -24,7 +27,7 @@ int main()
 
     application::UpdateReminderUseCase atualizar(repositorio);
     atualizar.execute(application::UpdateReminderRequest{
-        7,
+        id,
         "Atualizado",
         domain::Category::Work,
         domain::Date{27, 8, 2026},
@@ -32,10 +35,10 @@ int main()
         domain::ReminderType::Meeting,
         domain::ReminderRecurrence::Weekly});
 
-    const auto atualizado = repositorio.find_by_id(7);
+    const auto atualizado = repositorio.find_by_id(id);
 
     VP_EXPECT(atualizado.has_value(), "o lembrete atualizado deve continuar existindo");
-    VP_EXPECT(atualizado->id() == 7, "a atualização deve preservar o ID");
+    VP_EXPECT(atualizado->id() == id, "a atualização deve preservar o ID");
     VP_EXPECT(atualizado->description() == "Atualizado", "a atualização deve substituir a descrição");
     VP_EXPECT(atualizado->category() == domain::Category::Work, "a atualização deve substituir a categoria");
     VP_EXPECT((atualizado->date() == domain::Date{27, 8, 2026}), "a atualização deve substituir a data");
@@ -50,7 +53,7 @@ int main()
     try
     {
         atualizar.execute(application::UpdateReminderRequest{
-            999,
+            id + 999,
             "Inexistente",
             domain::Category::Work,
             domain::Date{1, 9, 2026},
@@ -70,7 +73,7 @@ int main()
     try
     {
         atualizar.execute(application::UpdateReminderRequest{
-            7,
+            id,
             " ",
             domain::Category::Health,
             domain::Date{1, 1, 2027},
@@ -83,7 +86,7 @@ int main()
         atualizacao_invalida_rejeitada = true;
     }
 
-    const auto apos_invalida = repositorio.find_by_id(7);
+    const auto apos_invalida = repositorio.find_by_id(id);
     VP_EXPECT(atualizacao_invalida_rejeitada, "a atualização deve rejeitar uma descrição inválida");
     VP_EXPECT(apos_invalida->description() == "Atualizado", "a atualização rejeitada deve preservar a descrição");
     VP_EXPECT(apos_invalida->category() == domain::Category::Work, "a atualização rejeitada deve preservar a categoria");

@@ -12,8 +12,10 @@ using namespace virtual_planner;
 int main()
 {
     persistence::InMemoryReminderRepository repositorio;
-    repositorio.save(domain::Reminder{
-        5,
+
+    // O id vem do repositorio (issue #90).
+    const auto id = repositorio.save(domain::Reminder{
+        0,
         "Excluir este lembrete",
         domain::Category::PersonalProjects,
         domain::Date{20, 8, 2026},
@@ -22,15 +24,15 @@ int main()
         domain::ReminderRecurrence::Once});
 
     application::DeleteReminderUseCase excluir(repositorio);
-    excluir.execute(5);
+    excluir.execute(id);
 
-    VP_EXPECT(!repositorio.find_by_id(5).has_value(), "a exclusão deve remover o lembrete existente");
+    VP_EXPECT(!repositorio.find_by_id(id).has_value(), "a exclusão deve remover o lembrete existente");
 
     bool inexistente_rejeitado = false;
 
     try
     {
-        excluir.execute(5);
+        excluir.execute(id);
     }
     catch (const std::runtime_error& error)
     {

@@ -29,7 +29,7 @@ void UpdateReminderUseCase::execute(
         request.type,
         request.recurrence};
 
-    repositorio_.save(atualizado);
+    repositorio_.update(atualizado);
 }
 
 } // namespace virtual_planner::application
