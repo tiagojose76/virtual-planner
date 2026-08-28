@@ -23,6 +23,9 @@
 - Enums de domínio ficam em `domain/enums`.
 - Interfaces de repositório de entidades ficam em `include/virtual_planner/persistence`.
 - Serialização JSON de tipos compartilhados fica em `api/json`, nunca em `domain`.
+- Servidor HTTP e rotas ficam em `api/http`. `httplib` e `nlohmann/json` podem
+  aparecer em `api`, nunca em `domain`, `application`, `core` ou nos contratos
+  base de `persistence`.
 - Testes ficam em `tests/unit` ou `tests/integration`.
 - Documentação fica em `docs`.
 - Adapter PostgreSQL fica em `infrastructure/postgres`.

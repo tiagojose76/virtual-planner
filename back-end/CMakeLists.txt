@@ -62,6 +62,15 @@ include(${VIRTUAL_PLANNER_CMAKE_DIR}/http.cmake)
 # ---------------------------------------------------------------------------
 add_executable(virtual_planner src/main.cpp)
 target_link_libraries(virtual_planner PRIVATE virtual_planner_core)
+
+# A camada HTTP e opcional: sem ela o executavel continua sendo a mesma
+# composition root, so que sem servidor. O alvo so existe com
+# VIRTUAL_PLANNER_WITH_HTTP=ON, e e ele que define o macro de mesmo nome
+# usado pelos #if de main.cpp.
+if(VIRTUAL_PLANNER_WITH_HTTP)
+  target_link_libraries(virtual_planner PRIVATE virtual_planner_http)
+endif()
+
 virtual_planner_enable_warnings(virtual_planner)
 
 # ---------------------------------------------------------------------------

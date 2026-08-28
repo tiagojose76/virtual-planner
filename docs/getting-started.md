@@ -68,14 +68,32 @@ documentado em [api.md](api.md).
 
 ```bash
 cmake -S back-end -B back-end/build-http -DVIRTUAL_PLANNER_WITH_HTTP=ON
-cmake --build back-end/build-http --config Debug
+cmake --build back-end/build-http
+ctest --test-dir back-end/build-http --output-on-failure
 ```
 
-`VIRTUAL_PLANNER_WITH_HTTP` é `OFF` por padrão, então o build padrão nunca
-toca a rede. Esse build compila a prova de conceito do endpoint `/api/health`
-(ADR-003, issue #13), que não é registrada no CTest e não roda no CI — a
-única forma de reverificar o critério de aceite da issue é rodar o comando
-acima manualmente.
+`VIRTUAL_PLANNER_WITH_HTTP` é `OFF` por padrão, então o build padrão nunca toca
+a rede. Esse build compila o servidor HTTP (P-28), liga
+`VIRTUAL_PLANNER_WITH_JSON` junto e registra `api_server_test` no CTest.
+
+Sem essa opção o executável continua sendo a mesma composition root, só que sem
+servidor: ele imprime a configuração e encerra.
+
+## Subir A API
+
+```bash
+VP_HTTP_HOST=127.0.0.1 VP_HTTP_PORT=8080 ./back-end/build-http/virtual_planner
+```
+
+Em outro terminal:
+
+```bash
+curl -s http://127.0.0.1:8080/api/health
+```
+
+`VP_HTTP_HOST` e `VP_HTTP_PORT` são opcionais e caem em `0.0.0.0:8080`. O
+contrato da resposta está em [api.md](api.md). A API sobe e responde mesmo sem
+PostgreSQL — nesse caso `/api/health` reporta que não há banco configurado.
 
 ## Docker PostgreSQL
 

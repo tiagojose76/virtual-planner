@@ -235,8 +235,10 @@ ordens de grandeza maior. A decisão não muda, mas o motivo é outro.
 - `nlohmann/json` é baixado pelo tarball da release (112 KiB, verificado por
   `SHA256`) e não pelo clone git, que ocupa 195 MB por trazer testes e dados de
   benchmark.
-- O PoC `back-end/src/api/health_poc.cpp` não é registrado no CTest e não sobe
-  em CI. Ele existe apenas como prova da decisão.
+- O PoC `back-end/src/api/health_poc.cpp` existiu apenas como prova da decisão e
+  foi removido na P-28, substituído pelo servidor real em
+  `back-end/src/api/http/`. Diferente do PoC, esse servidor é coberto por
+  `api_server_test` no CTest e roda no CI.
 - Trocar de biblioteca depois custa reescrever a camada `src/api/`, não o
   domínio.
 

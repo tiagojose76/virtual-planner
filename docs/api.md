@@ -2,17 +2,21 @@
 
 Este documento define o formato JSON usado na fronteira HTTP do backend.
 
-Hoje ele cobre apenas os **tipos compartilhados** — enums e value objects de
-domínio (P-29.0). A serialização de cada entidade (`Goal`, `Task`, `Reminder`,
-`User`) é definida pelas issues P-29.1 a P-29.4 e deve, obrigatoriamente,
-reutilizar as regras abaixo. O contrato REST completo (rotas, códigos de
-status, corpos de erro) é escrito na P-56.
+Hoje ele cobre os **tipos compartilhados** — enums e value objects de domínio
+(P-29.0) — e o endpoint `GET /api/health` (P-28). A serialização de cada
+entidade (`Goal`, `Task`, `Reminder`, `User`) é definida pelas issues P-29.1 a
+P-29.4 e deve, obrigatoriamente, reutilizar as regras abaixo. Os endpoints de
+domínio pertencem aos donos de cada módulo. O contrato REST consolidado é
+escrito na P-56.
 
 ## Onde está o código
 
-- `back-end/include/virtual_planner/api/json/shared_json.hpp`
-- `back-end/src/api/json/shared_json.cpp`
-- Testes de round-trip: `back-end/tests/unit/api/json/shared_json_test.cpp`
+- Serialização compartilhada: `back-end/include/virtual_planner/api/json/shared_json.hpp`
+  e `back-end/src/api/json/shared_json.cpp`
+- Servidor: `back-end/include/virtual_planner/api/http/api_server.hpp` e
+  `back-end/src/api/http/api_server.cpp`
+- Testes: `back-end/tests/unit/api/json/shared_json_test.cpp` e
+  `back-end/tests/integration/api/api_server_test.cpp`
 
 A serialização vive em `api`, não em `domain`: o domínio não conhece JSON e não
 depende de `nlohmann/json`. As conversões reaproveitam `domain::to_string` e os
@@ -21,18 +25,63 @@ mesma do domínio.
 
 ## Como habilitar
 
-O módulo depende de `nlohmann/json`, baixado via `FetchContent`. Por isso está
-atrás de uma opção, desligada por padrão, para que o build sem rede continue
-funcionando:
+As dependências (`nlohmann/json` e `cpp-httplib`) são baixadas via
+`FetchContent`. Por isso estão atrás de opções, desligadas por padrão, para que
+o build sem rede continue funcionando:
 
 ```bash
-cmake -S back-end -B back-end/build -DVIRTUAL_PLANNER_WITH_JSON=ON
-cmake --build back-end/build
-ctest --test-dir back-end/build --output-on-failure
+# Só a serialização compartilhada.
+cmake -S back-end -B back-end/build-json -DVIRTUAL_PLANNER_WITH_JSON=ON
+
+# Serialização + servidor HTTP. Liga VIRTUAL_PLANNER_WITH_JSON junto.
+cmake -S back-end -B back-end/build-http -DVIRTUAL_PLANNER_WITH_HTTP=ON
+
+cmake --build back-end/build-http
+ctest --test-dir back-end/build-http --output-on-failure
 ```
 
-`-DVIRTUAL_PLANNER_WITH_HTTP=ON` liga `VIRTUAL_PLANNER_WITH_JSON`
-automaticamente — o servidor HTTP responde com este mesmo JSON.
+Sem `VIRTUAL_PLANNER_WITH_HTTP` o executável continua sendo a mesma composition
+root, só que sem servidor: ele imprime a configuração e encerra.
+
+## Servidor
+
+O servidor escuta em `VP_HTTP_HOST` e `VP_HTTP_PORT`, documentados em
+`back-end/.env.example`. Os padrões são `0.0.0.0` e `8080`. `VP_HTTP_PORT=0`
+pede uma porta efêmera ao sistema operacional; a porta efetivamente aberta é
+impressa na subida.
+
+Um `VP_HTTP_PORT` que não seja um inteiro entre 0 e 65535 aborta a subida com
+`shared::ConfigError` e mensagem explícita — o servidor não sobe em uma porta
+que ninguém pediu.
+
+## `GET /api/health`
+
+Responde **sempre 200** com `Content-Type: application/json`. A resposta chegar
+já é a prova de que o processo está de pé, que é o que um health check precisa
+saber; o campo `status` distingue os graus de saúde.
+
+```jsonc
+{
+  "app": "virtual-planner",
+  "profile": "development",
+  "status": "ok",
+  "database": { "configured": false, "connected": false }
+}
+```
+
+| Campo | Significado |
+|---|---|
+| `app` | `VP_APP_NAME` |
+| `profile` | `VP_PROFILE` — `development`, `test` ou `production` |
+| `database.configured` | `true` quando a composition root ligou um banco |
+| `database.connected` | `true` quando esse banco está conectado |
+| `status` | `"ok"` sem banco ou com banco conectado; `"degraded"` quando há banco configurado e ele está fora do ar |
+
+A aplicação sobe e responde **sem PostgreSQL**: nesse caso `configured` é
+`false` e o `status` continua `"ok"`, porque não há banco para estar caído.
+
+Rotas não registradas respondem 404. O corpo padronizado de erro é assunto da
+P-35.
 
 ## Regra geral
 
@@ -138,3 +187,29 @@ const auto category = vpj::category_from_json(body.at("category"));
 const auto date = vpj::date_from_json(body.at("date"));
 const auto time_slot = vpj::time_slot_from_json(body.at("time_slot"));
 ```
+
+## Como registrar um endpoint novo
+
+`ApiServer` não conhece nenhum endpoint de domínio. Cada dono de módulo
+registra os seus **no próprio arquivo**, a partir do `httplib::Server` e do
+`RepositorySet` que o servidor expõe — assim seis pessoas nunca editam o mesmo
+arquivo de rotas:
+
+```cpp
+// back-end/src/api/http/routes/goal_routes.cpp (exemplo)
+void register_goal_routes(virtual_planner::api::http::ApiServer& api)
+{
+    auto* goals = api.repositories().goals;
+
+    api.server().Get("/api/goals",
+                     [goals](const httplib::Request&, httplib::Response& response) {
+                         nlohmann::json body = nlohmann::json::array();
+                         // ... serializa com virtual_planner::api::json
+                         response.set_content(body.dump(), "application/json");
+                     });
+}
+```
+
+`main.cpp` chama os `register_*_routes` depois de construir o `ApiServer` e
+antes do `bind`. Quem escolhe a implementação concreta de cada repositório
+continua sendo só o `main`: a rota recebe a porta, nunca o adapter.
