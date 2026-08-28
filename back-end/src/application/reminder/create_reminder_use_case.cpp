@@ -6,7 +6,7 @@ namespace virtual_planner::application {
 
 CreateReminderUseCase::CreateReminderUseCase(
     persistence::ReminderRepository& repository)
-    : repositorio_(repository)
+    : repository_(repository)
 {
 }
 
@@ -17,7 +17,7 @@ std::uint64_t CreateReminderUseCase::execute(
     // de id duplicado porque nao ha mais como duplicar: save so insere
     // (issue #90). O id passado a entidade aqui e descartado pelo
     // repositorio.
-    const domain::Reminder lembrete{
+    const domain::Reminder reminder{
         0,
         request.description,
         request.category,
@@ -26,7 +26,7 @@ std::uint64_t CreateReminderUseCase::execute(
         request.type,
         request.recurrence};
 
-    return repositorio_.save(lembrete);
+    return repository_.save(reminder);
 }
 
 } // namespace virtual_planner::application
