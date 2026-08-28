@@ -51,6 +51,19 @@ VP_USE_POSTGRES=true ./build-postgres/virtual_planner
 
 Também configure as variáveis `POSTGRES_*` descritas em `.env.example`.
 
+## Build Com JSON Compartilhado
+
+```bash
+cmake -S back-end -B back-end/build-json -DVIRTUAL_PLANNER_WITH_JSON=ON
+cmake --build back-end/build-json
+ctest --test-dir back-end/build-json --output-on-failure
+```
+
+`VIRTUAL_PLANNER_WITH_JSON` é `OFF` por padrão porque baixa `nlohmann/json`
+por `FetchContent`. Esse build compila a serialização compartilhada de enums e
+value objects (P-29.0) e registra `shared_json_test` no CTest. O formato está
+documentado em [api.md](api.md).
+
 ## Build Com HTTP
 
 ```bash
