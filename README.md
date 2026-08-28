@@ -254,6 +254,7 @@ Documentos adicionais estão disponíveis na pasta `docs/`:
 - [`docs/api.md`](docs/api.md): contrato JSON, endpoints, erros, CORS e log.
 - [`docs/date-timeslot-contract.md`](docs/date-timeslot-contract.md): contrato público congelado de `Date` e `TimeSlot`.
 - [`docs/reporting-metrics-data.md`](docs/reporting-metrics-data.md): dados necessários e casos de teste das métricas de relatório.
+- [`docs/reporting-metrics-contract.md`](docs/reporting-metrics-contract.md): fórmulas e contrato das métricas de relatório.
 - [`back-end/migrations/README.md`](back-end/migrations/README.md): convenção de numeração das migrações.
 
 O planejamento e o estado das tarefas ficam nas issues do GitHub, não neste arquivo.
