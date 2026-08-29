@@ -9,6 +9,7 @@ virtual_planner_add_sources(
   application/goal/list_goals_use_case.cpp
   application/goal/change_goal_status_use_case.cpp
 )
+
 # Task
 # virtual_planner_add_sources(application/task/...)
 

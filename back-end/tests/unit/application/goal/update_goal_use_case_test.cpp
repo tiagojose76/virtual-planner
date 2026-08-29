@@ -75,6 +75,7 @@ int main()
     VP_EXPECT(
         not_found_thrown,
         "updating a missing goal should throw NotFoundError");
+
     return 0;
 }
 

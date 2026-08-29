@@ -384,78 +384,43 @@ void register_goal_routes(ApiServer& api)
                     .dump(),
                 "application/json");
         });
-// PATCH /api/goals/:id
-api.server().Patch(
-    R"(/api/goals/(\d+))",
-    [goals](
-        const httplib::Request& request,
-        httplib::Response& response) {
-        const std::uint64_t id =
-            path_id(request);
 
-        application::GetGoalUseCase
-            get_use_case{
-                *goals};
+    // PATCH /api/goals/:id
+    api.server().Patch(
+        R"(/api/goals/(\d+))",
+        [goals](
+            const httplib::Request& request,
+            httplib::Response& response) {
+            const std::uint64_t id =
+                path_id(request);
 
-        const domain::Goal current_goal =
-            get_use_case.execute(id);
+            application::GetGoalUseCase
+                get_use_case{
+                    *goals};
 
-        const application::UpdateGoalRequest
-            update_request =
-                update_goal_request_from(
-                    request,
-                    current_goal);
+            const domain::Goal current_goal =
+                get_use_case.execute(id);
 
-        application::UpdateGoalUseCase
-            update_use_case{
-                *goals};
+            const application::UpdateGoalRequest
+                update_request =
+                    update_goal_request_from(
+                        request,
+                        current_goal);
 
-        update_use_case.execute(
-            update_request);
+            application::UpdateGoalUseCase
+                update_use_case{
+                    *goals};
 
-        const domain::Goal updated_goal =
-            get_use_case.execute(id);
+            update_use_case.execute(
+                update_request);
 
-        response.set_content(
-            json::to_json(updated_goal).dump(),
-            "application/json");
-});
-// PATCH /api/goals/:id
-api.server().Patch(
-    R"(/api/goals/(\d+))",
-    [goals](
-        const httplib::Request& request,
-        httplib::Response& response) {
-        const std::uint64_t id =
-            path_id(request);
+            const domain::Goal updated_goal =
+                get_use_case.execute(id);
 
-        application::GetGoalUseCase
-            get_use_case{
-                *goals};
-
-        const domain::Goal current_goal =
-            get_use_case.execute(id);
-
-        const application::UpdateGoalRequest
-            update_request =
-                update_goal_request_from(
-                    request,
-                    current_goal);
-
-        application::UpdateGoalUseCase
-            update_use_case{
-                *goals};
-
-        update_use_case.execute(
-            update_request);
-
-        const domain::Goal updated_goal =
-            get_use_case.execute(id);
-
-        response.set_content(
-            json::to_json(updated_goal).dump(),
-            "application/json");
-    });
+            response.set_content(
+                json::to_json(updated_goal).dump(),
+                "application/json");
+        });
 
     // PATCH /api/goals/:id/status
     api.server().Patch(

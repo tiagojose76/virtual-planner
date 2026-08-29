@@ -35,6 +35,7 @@ if(VIRTUAL_PLANNER_WITH_HTTP)
     ${VIRTUAL_PLANNER_SOURCE_DIR}/api/http/routes/reporting_routes.cpp
     ${VIRTUAL_PLANNER_SOURCE_DIR}/api/http/routes/goal_routes.cpp
   )
+
   target_link_libraries(virtual_planner_http
     PUBLIC
       virtual_planner_json

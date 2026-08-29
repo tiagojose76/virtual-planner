@@ -14,8 +14,8 @@ if(VIRTUAL_PLANNER_WITH_HTTP)
   virtual_planner_add_test(api_server_test integration/api/api_server_test.cpp)
   target_link_libraries(api_server_test PRIVATE virtual_planner_http)
   virtual_planner_add_test(
-  goal_routes_test
-  integration/api/goal_routes_test.cpp
+    goal_routes_test
+    integration/api/goal_routes_test.cpp
   )
   target_link_libraries(goal_routes_test PRIVATE virtual_planner_http)
 endif()
