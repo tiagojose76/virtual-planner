@@ -2,13 +2,54 @@
 
 Este documento define o formato JSON usado na fronteira HTTP do backend.
 
-Hoje ele cobre os **tipos compartilhados** — enums e value objects de domínio
-(P-29.0) —, o endpoint `GET /api/health` (P-28) e os endpoints de relatórios
-`GET /api/reports` e `GET /api/dashboard` (P-34). A serialização de cada
-entidade (`Goal`, `Task`, `Reminder`, `User`) é definida pelas issues P-29.1 a
-P-29.4 e deve, obrigatoriamente, reutilizar as regras abaixo. Os endpoints de
-domínio pertencem aos donos de cada módulo. O contrato REST consolidado é
-escrito na P-56.
+Ele é a **fonte de verdade do contrato REST** para quem consome a API — em
+particular o frontend. O que não estiver aqui não existe na fronteira HTTP, e o
+que estiver aqui foi conferido contra o código, endpoint por endpoint.
+
+## Índice dos endpoints
+
+Estes são **todos** os endpoints registrados hoje. A coluna "Sessão" diz se a
+rota exige o cookie `vp_session`; ver [Autenticação](#autenticação).
+
+| Método | Caminho | Sessão | Sucesso | Erros próprios |
+|---|---|---|---|---|
+| `OPTIONS` | qualquer caminho | não | `204` | `403` origem não autorizada |
+| `GET` | `/api/health` | não | `200` | — |
+| `POST` | `/api/auth/register` | não | `201` | `400` |
+| `POST` | `/api/auth/login` | não | `204` | `400`, `401` |
+| `POST` | `/api/auth/logout` | sim | `204` | — |
+| `GET` | `/api/auth/me` | sim | `200` | `401` sessão órfã |
+| `GET` | `/api/goals` | sim | `200` | `400` |
+| `POST` | `/api/goals` | sim | `201` | `400` |
+| `GET` | `/api/goals/:id` | sim | `200` | `404` |
+| `PATCH` | `/api/goals/:id` | sim | `200` | `400`, `404` |
+| `PATCH` | `/api/goals/:id/status` | sim | `200` | `400`, `404` |
+| `DELETE` | `/api/goals/:id` | sim | `204` | `404` |
+| `GET` | `/api/reports` | sim | `200` | `400` |
+| `GET` | `/api/dashboard` | sim | `200` | — |
+
+`:id` casa apenas com dígitos (`(\d+)` na rota). `/api/goals/abc` não é uma rota
+registrada, e cai no comportamento descrito em
+[Autenticação](#autenticação): `401` sem sessão, `404` com sessão.
+
+Toda rota autenticada devolve `401` sem sessão, e toda rota pode devolver `500`
+— os dois casos valem para a tabela inteira e não se repetem em cada linha.
+
+## O que ainda não existe
+
+Documentar o que não existe é tão parte do contrato quanto documentar o que
+existe: sem isto o frontend descobre a ausência em tempo de execução.
+
+| Entidade | Tipo JSON | Endpoints |
+|---|---|---|
+| `Goal` | sim | **sim**, os seis acima |
+| `Reminder` | sim (ver [Reminder](#reminder)) | **não** |
+| `Task` | não | **não** |
+| `User` | não | só o que `/api/auth/*` expõe |
+
+`Reminder` tem representação JSON definida e testada, mas **nenhuma rota** a
+serve ainda. `Task` não tem nem uma coisa nem outra. Enquanto isso não mudar, a
+única entidade de domínio consumível por HTTP é `Goal`.
 
 ## Onde está o código
 
@@ -16,8 +57,11 @@ escrito na P-56.
   e `back-end/src/api/json/shared_json.cpp`
 - Servidor: `back-end/include/virtual_planner/api/http/api_server.hpp` e
   `back-end/src/api/http/api_server.cpp`
+- Autenticação: `back-end/src/api/http/routes/auth_routes.cpp`
+- Rotas de `Goal`: `back-end/src/api/http/routes/goal_routes.cpp`
 - Relatórios: `back-end/include/virtual_planner/api/http/routes/reporting_routes.hpp`
   e `back-end/src/api/http/routes/reporting_routes.cpp`
+- Mapeamento de erro: `back-end/src/api/http/error_response.cpp`
 - Testes: `back-end/tests/unit/api/json/shared_json_test.cpp` e
   `back-end/tests/integration/api/api_server_test.cpp`; os endpoints de
   relatórios são cobertos por
@@ -59,6 +103,19 @@ Um `VP_HTTP_PORT` que não seja um inteiro entre 0 e 65535 aborta a subida com
 `shared::ConfigError` e mensagem explícita — o servidor não sobe em uma porta
 que ninguém pediu.
 
+## Limites
+
+Valem para toda requisição, e estão em
+`back-end/include/virtual_planner/api/http/api_server.hpp`:
+
+| Limite | Valor | Motivo |
+|---|---|---|
+| Corpo da requisição | 1 MiB | Sem teto explícito, uma única requisição esgota a memória do processo |
+| Timeout de leitura e de escrita | 10 s | Uma conexão que abre e não fala prende uma thread do pool indefinidamente |
+
+Um corpo acima do teto é recusado pelo próprio httplib, antes de chegar ao
+handler.
+
 ## Autenticação
 
 Toda rota exige sessão, com três exceções: `GET /api/health`,
@@ -93,6 +150,11 @@ Responde **201** com `{"id": 1, "email": "alice@example.com"}`. A senha exige
 no mínimo 12 caracteres e é guardada como PBKDF2-SHA256 com salt por usuário e
 210 000 iterações — nunca em texto claro. Registrar **não** abre sessão.
 
+E-mail já cadastrado responde **400** com `code="validation_error"`, e não
+`409`: o repositório sinaliza o caso com `std::invalid_argument`, que o
+mapeamento global trata como entrada inválida. Ramifique pelo `code`, não pelo
+status, se precisar distinguir esse caso de um campo faltando.
+
 ### `POST /api/auth/login`
 
 ```json
@@ -111,6 +173,23 @@ entregaria uma lista de quem tem conta.
 
 Responde **204** e invalida a sessão no servidor, além de expirar o cookie. Não
 depende de o cookie ainda ser válido.
+
+### `GET /api/auth/me`
+
+Quem é o dono da sessão atual. Responde **200**:
+
+```json
+{ "id": 1, "name": "Alice", "email": "alice@example.com" }
+```
+
+Existe para o frontend saber se há sessão **antes** de montar a tela. Sem ele, a
+única forma de descobrir que a sessão caiu seria tomar `401` numa chamada de
+domínio — com o dashboard já renderizado e vazio.
+
+O caso de borda tem resposta própria: se a sessão apontar para um usuário que
+não existe mais, o servidor encerra a sessão e responde **401** com
+`code="unauthorized"`. Isso acontece hoje a cada reinício do processo, porque
+`UserRepository` só existe em memória.
 
 ## Escopo por dono
 
@@ -313,7 +392,8 @@ um só lugar.
 
 Toda falha de desserialização lança `std::invalid_argument` — o mesmo tipo que
 os `*_from_string` do domínio e os construtores de `Date` e `TimeSlot` já
-lançam. O mapeamento desse erro para uma resposta HTTP é assunto da P-35.
+lançam. O mapeamento desse erro para uma resposta HTTP está em
+[Erros](#erros): `400` com `code="validation_error"`.
 
 ## Enums
 
@@ -324,7 +404,7 @@ exatamente o texto de `domain::to_string`.
 |---|---|
 | `Category` | `"College"`, `"Work"`, `"Health"`, `"Leisure"`, `"PersonalProjects"`, `"Study"` |
 | `GoalPeriod` | `"Weekly"`, `"Monthly"`, `"Yearly"` |
-| `GoalStatus` | `"InProgress"`, `"Completed"`, `"PartiallyCompleted"`, `"Failed"` |
+| `GoalStatus` | `"In Progress"`, `"Completed"`, `"Partially Completed"`, `"Failed"` |
 | `Priority` | `"Low"`, `"Medium"`, `"High"` |
 | `ReminderRecurrence` | `"Once"`, `"Daily"`, `"Weekly"`, `"Monthly"` |
 | `ReminderType` | `"Meeting"`, `"PhoneCall"`, `"Shopping"`, `"Study"`, `"Exercise"`, `"Assignment"` |
@@ -538,6 +618,10 @@ Uma remoção bem-sucedida responde **204** sem corpo. Um identificador
 inexistente responde **404** com `code="not_found"`.
 
 ## Reminder
+
+> **Tipo, não endpoint.** O que está abaixo é a representação JSON de
+> `Reminder`, já implementada e testada. Nenhuma rota a serve ainda — ver
+> [O que ainda não existe](#o-que-ainda-não-existe).
 
 A representação JSON de `Reminder` reutiliza as conversões compartilhadas de
 `Category`, `Date`, `TimeSlot`, `ReminderType` e `ReminderRecurrence` definidas
