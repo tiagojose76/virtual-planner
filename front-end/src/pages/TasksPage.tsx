@@ -10,20 +10,20 @@ export function TasksPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   useEffect(() => {
+    async function loadTasks() {
+      setIsLoading(true);
+      try {
+        const data = await virtualPlannerApi.getTasks();
+        setTasks(data);
+      } catch (error) {
+        console.error("Erro ao buscar tarefas:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
     loadTasks();
   }, []);
-
-  async function loadTasks() {
-    setIsLoading(true);
-    try {
-      const data = await virtualPlannerApi.getTasks();
-      setTasks(data);
-    } catch (error) {
-      console.error("Erro ao buscar tarefas:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   async function handleDelete(id: number) {
     if (!window.confirm("Deseja realmente excluir esta tarefa?")) return;

@@ -1,85 +1,67 @@
 #include "virtual_planner/domain/entities/user.hpp"
 
+#include "virtual_planner/domain/text.hpp"
+
 #include <stdexcept>
 #include <utility>
 
 namespace virtual_planner::domain {
-
-User::User(
-    std::uint64_t id,
-    std::string name,
-    std::string email
-)
-    : id_(id),
-      name_(std::move(name)),
-      email_(std::move(email))
-{
-    if (name_.empty())
+    User::User(std::uint64_t id, std::string name, std::string email)
+        : id_(id)
     {
-        throw std::invalid_argument(
-            "User name cannot be empty."
-        );
+        validate_name(name);
+        validate_email(email);
+        name_ = std::move(name);
+        email_ = std::move(email);
     }
 
-    if (email_.empty())
+    std::uint64_t User::id() const
     {
-        throw std::invalid_argument(
-            "User email cannot be empty."
-        );
+        return id_;
     }
 
-    if (email_.find('@') == std::string::npos)
+    const std::string& User::name() const
     {
-        throw std::invalid_argument(
-            "Invalid email."
-        );
-    }
-}
-
-std::uint64_t User::id() const
-{
-    return id_;
-}
-
-const std::string& User::name() const
-{
-    return name_;
-}
-
-const std::string& User::email() const
-{
-    return email_;
-}
-
-void User::update_name(std::string name)
-{
-    if (name.empty())
-    {
-        throw std::invalid_argument(
-            "User name cannot be empty."
-        );
+        return name_;
     }
 
-    name_ = std::move(name);
-}
-
-void User::update_email(std::string email)
-{
-    if (email.empty())
+    const std::string& User::email() const
     {
-        throw std::invalid_argument(
-            "User email cannot be empty."
-        );
+        return email_;
     }
 
-    if (email.find('@') == std::string::npos)
+    void User::update_name(std::string new_name)
     {
-        throw std::invalid_argument(
-            "Invalid email."
-        );
+        validate_name(new_name);
+        name_ = std::move(new_name);
     }
 
-    email_ = std::move(email);
-}
+    void User::update_email(std::string new_email)
+    {
+        validate_email(new_email);
+        email_ = std::move(new_email);
+    }
 
+    void User::validate_name(const std::string& name) const
+    {
+        if (is_blank(name))
+        {
+            throw std::invalid_argument(
+                "User name cannot be empty or blank.");
+        }
+    }
+
+    void User::validate_email(const std::string& email) const
+    {
+        if (is_blank(email))
+        {
+            throw std::invalid_argument(
+                "User email cannot be empty or blank.");
+        }
+
+        if (email.find('@') == std::string::npos)
+        {
+            throw std::invalid_argument("Invalid email.");
+        }
+    }
 } // namespace virtual_planner::domain

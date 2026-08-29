@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
-import type { Task, Goal } from "../types/domain";
+
+const REPORT_PERIODS = ["Semana", "Mês", "Ano"] as const;
+
+type ReportPeriod = (typeof REPORT_PERIODS)[number];
 
 interface ReportStats {
   tasks: { total: number; completed: number; percentage: number };
@@ -12,9 +15,7 @@ interface ReportStats {
 
 export function ReportsPage() {
   //Memória estado da tela
-  const [filterType, setFilterType] = useState<"Semana" | "Mês" | "Ano">(
-    "Semana",
-  );
+  const [filterType, setFilterType] = useState<ReportPeriod>("Semana");
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,7 +43,7 @@ export function ReportsPage() {
 
         //Filtra apenas as tarefas concluídas
         const completedTasks = allTasks.filter(
-          (t) => t.status === "Concluído" || t.status === "Executada",
+          (t) => t.status === "Executed",
         );
 
         const taskPercentage =
@@ -52,7 +53,7 @@ export function ReportsPage() {
 
         const totalGoals = allGoals.length;
 
-        const completedGoals = allGoals.filter((g) => g.status === "Cumprida");
+        const completedGoals = allGoals.filter((g) => g.status === "Completed");
 
         const goalPercentage =
           totalGoals === 0
@@ -153,10 +154,10 @@ export function ReportsPage() {
 
         {/* BOTÕES DE FILTRO (Semana, Mês, Ano) */}
         <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-lg border border-gray-200 dark:border-gray-800">
-          {["Semana", "Mês", "Ano"].map((period) => (
+          {REPORT_PERIODS.map((period) => (
             <button
               key={period}
-              onClick={() => setFilterType(period as any)}
+              onClick={() => setFilterType(period)}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 filterType === period
                   ? "bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-sm"

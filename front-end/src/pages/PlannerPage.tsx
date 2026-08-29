@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
+import { formatDateForInput } from "../lib/formatters";
+import type { Task } from "../types/domain";
 
 type TimeSlotItem = {
   id: string;
@@ -10,12 +12,16 @@ type TimeSlotItem = {
   hasConflict?: boolean;
 };
 
+const hasExactTime = (
+  task: Task,
+): task is Task & { startMinutes: number; endMinutes: number } =>
+  task.startMinutes !== undefined && task.endMinutes !== undefined;
+
 export function PlannerPage() {
   const [items, setItems] = useState<TimeSlotItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fixo para o exemplo, na prática viria de um DatePicker
-  const SELECTED_DATE = new Date().toISOString().split("T")[0];
+  const selectedDate = formatDateForInput();
 
   useEffect(() => {
     async function loadAgenda() {
@@ -28,11 +34,18 @@ export function PlannerPage() {
 
         // Filtra pelo dia e mapeia para um formato único de TimeSlot
         const dayTasks: TimeSlotItem[] = tasks
-          .filter((t) => t.date === SELECTED_DATE)
-          .map((t) => ({ ...t, id: `task-${t.id}`, type: "Task" }));
+          .filter((task) => task.date === selectedDate)
+          .filter(hasExactTime)
+          .map((task) => ({
+            id: `task-${task.id}`,
+            type: "Task",
+            description: task.description,
+            startMinutes: task.startMinutes,
+            endMinutes: task.endMinutes,
+          }));
 
         const dayReminders: TimeSlotItem[] = reminders
-          .filter((r) => r.date === SELECTED_DATE)
+          .filter((r) => r.date === selectedDate)
           .map((r) => ({ ...r, id: `rem-${r.id}`, type: "Reminder" }));
 
         let agenda = [...dayTasks, ...dayReminders];
@@ -59,7 +72,7 @@ export function PlannerPage() {
       }
     }
     loadAgenda();
-  }, [SELECTED_DATE]);
+  }, [selectedDate]);
 
   const formatTime = (mins: number) => {
     const h = Math.floor(mins / 60)
@@ -73,7 +86,7 @@ export function PlannerPage() {
     <div className="p-6 space-y-6">
       <header className="border-b border-purple-900/30 pb-4">
         <h1 className="text-3xl font-bold text-white">Planejamento Diário</h1>
-        <p className="text-sm text-gray-400">Agenda para {SELECTED_DATE}</p>
+        <p className="text-sm text-gray-400">Agenda para {selectedDate}</p>
       </header>
 
       <div className="bg-gray-900 rounded-lg p-6 border border-gray-800 shadow-xl">

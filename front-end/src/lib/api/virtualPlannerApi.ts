@@ -47,7 +47,17 @@ export const virtualPlannerApi = {
     }
 
     // Pega a tarefa antiga e substitui apenas os campos novos que chegaram
-    const updatedTask = { ...currentTasks[index], ...updates };
+    const updatedTask: Task = { ...currentTasks[index], ...updates };
+
+    if (updates.shift !== undefined) {
+      delete updatedTask.startMinutes;
+      delete updatedTask.endMinutes;
+    } else if (
+      updates.startMinutes !== undefined ||
+      updates.endMinutes !== undefined
+    ) {
+      delete updatedTask.shift;
+    }
 
     currentTasks[index] = updatedTask;
     return updatedTask;

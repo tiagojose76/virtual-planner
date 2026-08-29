@@ -1,15 +1,17 @@
 import type { FC } from "react";
-import { Link, useLocation } from "react-router"; //
 
-export const Sidebar: FC = () => {
-  const location = useLocation(); // Descobre em qual URL estamos agora
+interface SidebarProps {
+  currentTab: string;
+  setCurrentTab: (tab: string) => void;
+}
 
+export const Sidebar: FC<SidebarProps> = ({ currentTab, setCurrentTab }) => {
   const navItems = [
-    { id: "/", label: "Dashboard", icon: "📊" },
-    { id: "/tasks", label: "Tarefas", icon: "✅" },
-    { id: "/goals", label: "Metas", icon: "🎯" },
-    { id: "/reminders", label: "Lembretes", icon: "🔔" },
-    { id: "/reports", label: "Relatórios", icon: "📈" },
+    { id: "dashboard", label: "Dashboard", icon: "📊" },
+    { id: "tasks", label: "Tarefas", icon: "✅" },
+    { id: "goals", label: "Metas", icon: "🎯" },
+    { id: "reminders", label: "Lembretes", icon: "🔔" },
+    { id: "reports", label: "Relatórios", icon: "📈" },
   ];
 
   return (
@@ -22,6 +24,7 @@ export const Sidebar: FC = () => {
         <h1 className="font-bold text-base leading-tight text-slate-100">
           Virtual Planner
         </h1>
+
         <span className="text-xs text-purple-400 font-medium">
           Painel Integrado
         </span>
@@ -29,13 +32,12 @@ export const Sidebar: FC = () => {
 
       <nav className="flex-1 space-y-1.5">
         {navItems.map((item) => {
-          // Verifica se a URL atual é igual ao id (caminho) do botão
-          const isActive = location.pathname === item.id;
+          const isActive = currentTab === item.id;
 
           return (
-            <Link
+            <button
               key={item.id}
-              to={item.id}
+              onClick={() => setCurrentTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30"
@@ -44,7 +46,7 @@ export const Sidebar: FC = () => {
             >
               <span className="text-lg">{item.icon}</span>
               <span>{item.label}</span>
-            </Link>
+            </button>
           );
         })}
       </nav>

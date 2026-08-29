@@ -9,20 +9,20 @@ export function RemindersPage() {
   const [selectedType, setSelectedType] = useState<string>("ALL");
 
   useEffect(() => {
+    async function loadReminders() {
+      setIsLoading(true);
+      try {
+        const data = await virtualPlannerApi.getReminders();
+        setReminders(data);
+      } catch (error) {
+        console.error("Erro ao buscar lembretes:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
     loadReminders();
   }, []);
-
-  async function loadReminders() {
-    setIsLoading(true);
-    try {
-      const data = await virtualPlannerApi.getReminders();
-      setReminders(data);
-    } catch (error) {
-      console.error("Erro ao buscar lembretes:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   async function handleDelete(id: number) {
     if (!window.confirm("Deseja realmente excluir este lembrete?")) return;

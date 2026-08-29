@@ -1,12 +1,12 @@
 #include "virtual_planner/application/goal/change_goal_status_use_case.hpp"
 #include "support/expect.hpp"
-#include "../../persistence/fake_goal_repository.hpp"
+#include "virtual_planner/persistence/memory/in_memory_goal_repository.hpp"
 
 using namespace virtual_planner;
 
 int main()
 {
-    tests::FakeGoalRepository repository;
+    persistence::InMemoryGoalRepository repository;
 
     repository.save(
         domain::Goal(
@@ -14,7 +14,8 @@ int main()
             "Finish Planner",
             domain::Category::Study,
             domain::GoalStatus::InProgress,
-            domain::GoalPeriod::Weekly));
+            domain::GoalPeriod::Weekly,
+            domain::Date(10, 8, 2026)));
 
     application::ChangeGoalStatusUseCase use_case(repository);
 
