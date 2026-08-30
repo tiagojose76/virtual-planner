@@ -1,4 +1,5 @@
 #include "virtual_planner/application/goal/change_goal_status_use_case.hpp"
+#include "virtual_planner/shared/errors.hpp"
 
 #include <stdexcept>
 
@@ -11,13 +12,14 @@ ChangeGoalStatusUseCase::ChangeGoalStatusUseCase(
 }
 
 void ChangeGoalStatusUseCase::execute(
-    const ChangeGoalStatusRequest& request)
+    const ChangeGoalStatusRequest& request,
+    std::uint64_t user_id)
 {
-    auto goal = repository_.find_by_id(request.id);
+    auto goal = repository_.find_by_id(request.id, user_id);
 
     if (!goal.has_value())
     {
-        throw std::runtime_error(
+        throw shared::NotFoundError(
             "Goal not found.");
     }
 
@@ -40,7 +42,7 @@ void ChangeGoalStatusUseCase::execute(
             break;
     }
 
-    repository_.update(*goal);
+    repository_.update(*goal, user_id);
 }
 
 } // namespace virtual_planner::application

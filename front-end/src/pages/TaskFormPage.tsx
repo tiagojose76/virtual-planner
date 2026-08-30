@@ -5,11 +5,27 @@ import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 
 export type TaskFormData = Omit<Task, "id">;
 
+// O id fica de fora do formulario: ele vem da rota. Guarda-lo tambem no estado
+// abriria espaco para o corpo da requisicao discordar do caminho.
+function toFormData(task: Task): TaskFormData {
+  return {
+    description: task.description,
+    category: task.category,
+    date: task.date,
+    startMinutes: task.startMinutes,
+    endMinutes: task.endMinutes,
+    shift: task.shift,
+    priority: task.priority,
+    status: task.status,
+    color: task.color,
+  };
+}
+
 export function TaskFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing);
   const [timeMode, setTimeMode] = useState<"exact" | "shift">("exact");
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -26,14 +42,12 @@ export function TaskFormPage() {
 
   useEffect(() => {
     if (isEditing && id) {
-      setIsLoading(true);
       virtualPlannerApi
         .getTasks()
         .then((tasks) => {
           const taskFound = tasks.find((t) => t.id === Number(id));
           if (taskFound) {
-            const { id: _, ...dataWithoutId } = taskFound;
-            setFormData(dataWithoutId);
+            setFormData(toFormData(taskFound));
           }
         })
         .catch((err) => console.error("Erro ao carregar tarefa:", err))

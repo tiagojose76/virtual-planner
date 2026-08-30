@@ -6,12 +6,25 @@ import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 
 export type ReminderFormData = Omit<Reminder, "id">;
 
+// Mesma razao do formulario de tarefa: o id vem da rota, nao do estado.
+function toFormData(reminder: Reminder): ReminderFormData {
+  return {
+    description: reminder.description,
+    category: reminder.category,
+    date: reminder.date,
+    startMinutes: reminder.startMinutes,
+    endMinutes: reminder.endMinutes,
+    type: reminder.type,
+    recurrence: reminder.recurrence,
+  };
+}
+
 export function ReminderFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing);
   const todayStr = new Date().toISOString().split("T")[0];
 
   const [formData, setFormData] = useState<ReminderFormData>({
@@ -26,14 +39,12 @@ export function ReminderFormPage() {
 
   useEffect(() => {
     if (isEditing && id) {
-      setIsLoading(true);
       virtualPlannerApi
         .getReminders()
         .then((reminders) => {
           const reminderFound = reminders.find((r) => r.id === Number(id));
           if (reminderFound) {
-            const { id: _, ...dataWithoutId } = reminderFound;
-            setFormData(dataWithoutId);
+            setFormData(toFormData(reminderFound));
           }
         })
         .catch((err) => console.error("Erro ao carregar lembrete:", err))

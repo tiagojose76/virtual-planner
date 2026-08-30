@@ -11,20 +11,19 @@ export function GoalsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
 
   useEffect(() => {
+    async function loadGoals() {
+      try {
+        const data = await virtualPlannerApi.getGoals();
+        setGoals(data);
+      } catch (error) {
+        console.error("Erro ao buscar metas:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
     loadGoals();
   }, []);
-
-  async function loadGoals() {
-    setIsLoading(true);
-    try {
-      const data = await virtualPlannerApi.getGoals();
-      setGoals(data);
-    } catch (error) {
-      console.error("Erro ao buscar metas:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   async function handleDelete(id: number) {
     if (!window.confirm("Deseja realmente excluir esta meta?")) return;

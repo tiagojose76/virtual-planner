@@ -79,6 +79,7 @@ export interface Goal {
   category: Category;
   status: GoalStatus;
   period: GoalPeriod;
+  reference_date: string;
 }
 
 export interface Reminder {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 import type { Task, Goal, Reminder } from "../types/domain";
+import { formatDateForInput } from "../lib/formatters";
 
 export function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -9,8 +10,16 @@ export function DashboardPage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Data fixa para bater com os nossos mocks (apenas para testes)
-  const TODAY = "2026-08-20";
+  // O dia civil local, e nao uma data fixa. Com "2026-08-20" cravado aqui o
+  // "Resumo do Dia" respondia sempre pelo dia 20 de agosto: passada a data,
+  // pendentes, concluidas, lembretes e produtividade ficavam zerados para
+  // sempre. Os mocks tambem passaram a nascer relativos a hoje (mocks/seed.ts),
+  // entao a data fixa nao casaria com nada.
+  //
+  // formatDateForInput e a mesma funcao que os mocks usam, entao os dois lados
+  // formatam do mesmo jeito — e ambos em horario local, sem o deslocamento que
+  // toISOString introduziria.
+  const TODAY = formatDateForInput();
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -37,7 +46,6 @@ export function DashboardPage() {
   }, []);
 
   const todayTasks = tasks.filter((t) => t.date === TODAY);
-  const pendingTasks = tasks.filter((t) => t.status === "Pending");
   const inProgressGoals = goals.filter((g) => g.status === "In Progress");
   const todayReminders = reminders.filter((r) => r.date === TODAY);
 
