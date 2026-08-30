@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
-import type { SubmitEvent } from "react";
+import type { FormEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import type { Reminder } from "../types/domain";
+import type {
+  Reminder,
+  ReminderType,
+  ReminderRecurrence,
+  Category,
+} from "../types/domain";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 
 export type ReminderFormData = Omit<Reminder, "id">;
@@ -18,8 +23,8 @@ export function ReminderFormPage() {
     date: new Date().toISOString().split("T")[0],
     startMinutes: 480, // 08:00
     endMinutes: 540, // 09:00
-    type: "General",
-    recurrence: "None",
+    type: "Meeting",
+    recurrence: "Once",
   });
 
   useEffect(() => {
@@ -45,11 +50,14 @@ export function ReminderFormPage() {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]:
+        name === "startMinutes" || name === "endMinutes"
+          ? Number(value)
+          : value,
     }));
   };
 
-  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -68,14 +76,14 @@ export function ReminderFormPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-full transition-colors">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-slate-100">
+    <div className="w-full min-h-full p-6 md:p-8 space-y-6 bg-slate-50 dark:bg-gray-950 text-slate-900 dark:text-gray-100 transition-colors flex flex-col">
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-purple-900/30 pb-4">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           {isEditing ? "Editar Lembrete" : "Novo Lembrete"}
         </h1>
         <Link
           to="/reminders"
-          className="text-slate-400 hover:text-slate-200 transition-colors"
+          className="text-gray-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors font-medium text-sm"
         >
           Voltar
         </Link>
@@ -83,10 +91,10 @@ export function ReminderFormPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white dark:bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl"
+        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-purple-900/30 rounded-2xl p-6 space-y-6 shadow-sm max-w-2xl"
       >
         <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">
+          <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
             Descrição do Lembrete
           </label>
           <input
@@ -96,32 +104,59 @@ export function ReminderFormPage() {
             onChange={handleChange}
             required
             disabled={isLoading}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all disabled:opacity-50"
+            className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all disabled:opacity-50"
             placeholder="Ex: Reunião de alinhamento com a equipe"
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Tipos obrigatórios conforme o PDF do professor */}
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
-              Tipo
+            <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+              Tipo de Lembrete
             </label>
             <select
               name="type"
               value={formData.type}
               onChange={handleChange}
               disabled={isLoading}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all disabled:opacity-50"
+              className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all disabled:opacity-50"
             >
-              <option value="General">Geral</option>
-              <option value="Meeting">Reunião</option>
-              <option value="Deadline">Entrega</option>
-              <option value="Personal">Perssoal</option>
+              <option value="Meeting">Reuniões (Meeting)</option>
+              <option value="PhoneCall">Ligações (PhoneCall)</option>
+              <option value="Shopping">Compras (Shopping)</option>
+              <option value="Study">Estudos (Study)</option>
+              <option value="Exercise">Exercícios (Exercise)</option>
+              <option value="Assignment">
+                Entregas de trabalhos (Assignment)
+              </option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">
+            <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+              Categoria
+            </label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all disabled:opacity-50"
+            >
+              <option value="College">Faculdade</option>
+              <option value="Work">Trabalho</option>
+              <option value="Health">Saúde</option>
+              <option value="Leisure">Lazer</option>
+              <option value="PersonalProjects">Projetos Pessoais</option>
+              <option value="Study">Estudos</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
               Data
             </label>
             <input
@@ -131,22 +166,73 @@ export function ReminderFormPage() {
               onChange={handleChange}
               required
               disabled={isLoading}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all [color-scheme:dark] disabled:opacity-50"
+              className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all dark:[color-scheme:dark] disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+              Início (Minutos)
+            </label>
+            <input
+              type="number"
+              name="startMinutes"
+              value={formData.startMinutes}
+              onChange={handleChange}
+              min={0}
+              max={1440}
+              disabled={isLoading}
+              className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+              Fim (Minutos)
+            </label>
+            <input
+              type="number"
+              name="endMinutes"
+              value={formData.endMinutes}
+              onChange={handleChange}
+              min={0}
+              max={1440}
+              disabled={isLoading}
+              className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all disabled:opacity-50"
             />
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
+        {/* Recorrência obrigatória exigida pelo professor */}
+        <div>
+          <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
+            Recorrência[cite: 2]
+          </label>
+          <select
+            name="recurrence"
+            value={formData.recurrence}
+            onChange={handleChange}
+            disabled={isLoading}
+            className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all disabled:opacity-50"
+          >
+            <option value="Once">Único (Apenas uma vez)</option>
+            <option value="Daily">Diário</option>
+            <option value="Weekly">Semanal</option>
+            <option value="Monthly">Mensal</option>
+          </select>
+        </div>
+
+        <div className="pt-4 border-t border-gray-200 dark:border-purple-900/30 flex justify-end gap-3">
           <Link
             to="/reminders"
-            className="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+            className="px-5 py-2.5 rounded-xl text-sm font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-transparent hover:bg-purple-100 dark:hover:bg-gray-800 transition-colors"
           >
             Cancelar
           </Link>
           <button
             type="submit"
             disabled={isLoading}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-600/20 transition-all disabled:opacity-50"
+            className="px-6 py-2.5 rounded-xl text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-600/30 transition-all disabled:opacity-50"
           >
             {isLoading
               ? "Salvando..."
