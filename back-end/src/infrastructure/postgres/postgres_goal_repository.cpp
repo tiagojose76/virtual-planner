@@ -43,7 +43,8 @@ PostgresGoalRepository::PostgresGoalRepository(
 }
 
 std::uint64_t PostgresGoalRepository::save(
-    const domain::Goal& goal)
+    const domain::Goal& goal,
+    std::uint64_t user_id)
 {
     pqxx::work transaction(database_.connection());
 
@@ -51,17 +52,19 @@ std::uint64_t PostgresGoalRepository::save(
         R"(
             INSERT INTO goals
             (
+                user_id,
                 description,
                 category,
                 status,
                 period,
                 reference_date
             )
-            VALUES ($1,$2,$3,$4,$5)
+            VALUES ($1,$2,$3,$4,$5,$6)
             RETURNING id
         )",
         pqxx::params{
             transaction,
+            user_id,
             goal.description(),
             to_string(goal.category()),
             to_string(goal.status()),
@@ -78,7 +81,8 @@ std::uint64_t PostgresGoalRepository::save(
 }
 
 void PostgresGoalRepository::update(
-    const domain::Goal& goal)
+    const domain::Goal& goal,
+    std::uint64_t user_id)
 {
     pqxx::work transaction(database_.connection());
 
@@ -92,7 +96,7 @@ void PostgresGoalRepository::update(
                 period=$4,
                 reference_date=$5,
                 updated_at=CURRENT_TIMESTAMP
-            WHERE id=$6
+            WHERE id=$6 AND user_id=$7
         )",
         pqxx::params{
             transaction,
@@ -101,14 +105,16 @@ void PostgresGoalRepository::update(
             to_string(goal.status()),
             to_string(goal.period()),
             date_to_postgres(goal.reference_date()),
-            goal.id()
+            goal.id(),
+            user_id
         }).no_rows();
 
     transaction.commit();
 }
 
 std::optional<domain::Goal>
-PostgresGoalRepository::find_by_id(std::uint64_t id)
+PostgresGoalRepository::find_by_id(std::uint64_t id,
+                                   std::uint64_t user_id)
 {
     pqxx::read_transaction transaction(
         database_.connection());
@@ -128,9 +134,9 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
                 EXTRACT(YEAR FROM reference_date)::INTEGER
                     AS reference_date_year
             FROM goals
-            WHERE id = $1
+            WHERE id = $1 AND user_id = $2
         )",
-        pqxx::params{transaction, id}
+        pqxx::params{transaction, id, user_id}
     );
 
     if (result.empty())
@@ -154,7 +160,7 @@ PostgresGoalRepository::find_by_id(std::uint64_t id)
 }
 
 std::vector<domain::Goal>
-PostgresGoalRepository::find_all()
+PostgresGoalRepository::find_all(std::uint64_t user_id)
 {
     pqxx::read_transaction transaction(
         database_.connection());
@@ -174,8 +180,10 @@ PostgresGoalRepository::find_all()
                 EXTRACT(YEAR FROM reference_date)::INTEGER
                     AS reference_date_year
             FROM goals
+            WHERE user_id = $1
             ORDER BY id
-        )"
+        )",
+        pqxx::params{transaction, user_id}
     );
 
     std::vector<domain::Goal> goals;
@@ -203,7 +211,8 @@ PostgresGoalRepository::find_all()
 std::vector<domain::Goal>
 PostgresGoalRepository::find_by_date_range(
     const domain::Date& start,
-    const domain::Date& end)
+    const domain::Date& end,
+    std::uint64_t user_id)
 {
     pqxx::read_transaction transaction(
         database_.connection());
@@ -223,12 +232,14 @@ PostgresGoalRepository::find_by_date_range(
                 EXTRACT(YEAR FROM reference_date)::INTEGER
                     AS reference_date_year
             FROM goals
-            WHERE reference_date >= $1
-              AND reference_date <= $2
+            WHERE user_id = $1
+              AND reference_date >= $2
+              AND reference_date <= $3
             ORDER BY reference_date, id
         )",
         pqxx::params{
             transaction,
+            user_id,
             date_to_postgres(start),
             date_to_postgres(end)
         }
@@ -257,13 +268,14 @@ PostgresGoalRepository::find_by_date_range(
 }
 
 void PostgresGoalRepository::remove(
-    std::uint64_t id)
+    std::uint64_t id,
+    std::uint64_t user_id)
 {
     pqxx::work transaction(database_.connection());
 
     transaction.exec(
-        "DELETE FROM goals WHERE id=$1",
-        pqxx::params{transaction, id}).no_rows();
+        "DELETE FROM goals WHERE id=$1 AND user_id=$2",
+        pqxx::params{transaction, id, user_id}).no_rows();
 
     transaction.commit();
 }

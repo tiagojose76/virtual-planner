@@ -20,7 +20,11 @@
 
 #include <httplib.h>
 
+#include <cstddef>
+#include <ctime>
+
 #include "virtual_planner/api/http/server_config.hpp"
+#include "virtual_planner/api/http/session_store.hpp"
 #include "virtual_planner/core/app_config.hpp"
 #include "virtual_planner/interfaces/logger.hpp"
 #include "virtual_planner/persistence/database.hpp"
@@ -50,6 +54,13 @@ public:
     // com o que receber, mas as origens vem daqui.
     [[nodiscard]] const ServerConfig& server_config() const noexcept;
 
+    [[nodiscard]] std::optional<std::uint64_t> authenticated_user_id(
+        const httplib::Request& request) const;
+
+    void begin_session(httplib::Response& response, std::uint64_t user_id);
+    void end_session(const httplib::Request& request,
+                     httplib::Response& response);
+
     // Abre a porta sem comecar a servir. Devolve a porta efetiva — util com
     // `ServerConfig::port == 0`, que pede uma porta efemera ao sistema — ou
     // -1 quando a porta nao pode ser aberta.
@@ -67,6 +78,14 @@ public:
     void stop();
 
 private:
+    // Teto do corpo de requisicao e dos timeouts de socket. Ficam aqui, e nao
+    // soltos no .cpp, para que um teste consiga afirmar sobre os mesmos valores
+    // que o servidor aplica.
+    static constexpr std::size_t kMaxPayloadBytes = 1024U * 1024U;
+    static constexpr time_t kSocketTimeoutSeconds = 10;
+    static constexpr time_t kIdleIntervalMicroseconds = 100000;
+
+    void register_limits();
     void register_health_route();
 
     // Aplicado a todas as rotas de uma vez: um dono de modulo nao escreve
@@ -78,12 +97,14 @@ private:
 
     // Uma linha por requisicao atendida (issue #71).
     void register_request_log();
+    void register_authentication_gate();
 
     const core::AppConfig& config_;
     persistence::RepositorySet repositories_;
     const persistence::Database* database_;
     interfaces::Logger& logger_;
     ServerConfig server_config_;
+    SessionStore sessions_;
     httplib::Server server_;
 };
 
