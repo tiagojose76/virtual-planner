@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import type {
-  Reminder,
-  ReminderType,
-  ReminderRecurrence,
-  Category,
-} from "../types/domain";
+import type { Reminder } from "../types/domain";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 
 export type ReminderFormData = Omit<Reminder, "id">;
@@ -17,12 +12,14 @@ export function ReminderFormPage() {
   const isEditing = Boolean(id);
 
   const [isLoading, setIsLoading] = useState(false);
+  const todayStr = new Date().toISOString().split("T")[0];
+
   const [formData, setFormData] = useState<ReminderFormData>({
     description: "",
     category: "Study",
-    date: new Date().toISOString().split("T")[0],
-    startMinutes: 480, // 08:00
-    endMinutes: 540, // 09:00
+    date: todayStr,
+    startMinutes: 480,
+    endMinutes: 540,
     type: "Meeting",
     recurrence: "Once",
   });
@@ -59,6 +56,12 @@ export function ReminderFormPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (formData.date < todayStr) {
+      alert("Não é permitido agendar lembretes para datas no passado.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -110,10 +113,9 @@ export function ReminderFormPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tipos obrigatórios conforme o PDF do professor */}
           <div>
             <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
-              Tipo de Lembrete
+              Tipo
             </label>
             <select
               name="type"
@@ -122,13 +124,13 @@ export function ReminderFormPage() {
               disabled={isLoading}
               className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-purple-900/50 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all disabled:opacity-50"
             >
-              <option value="Meeting">Reuniões (Meeting)</option>
-              <option value="PhoneCall">Ligações (PhoneCall)</option>
+              <option value="Meeting">Reunião (Meeting)</option>
+              <option value="PhoneCall">Ligação (PhoneCall)</option>
               <option value="Shopping">Compras (Shopping)</option>
               <option value="Study">Estudos (Study)</option>
               <option value="Exercise">Exercícios (Exercise)</option>
               <option value="Assignment">
-                Entregas de trabalhos (Assignment)
+                Entrega de Trabalho (Assignment)
               </option>
             </select>
           </div>
@@ -162,6 +164,7 @@ export function ReminderFormPage() {
             <input
               type="date"
               name="date"
+              min={todayStr}
               value={formData.date}
               onChange={handleChange}
               required
@@ -203,10 +206,9 @@ export function ReminderFormPage() {
           </div>
         </div>
 
-        {/* Recorrência obrigatória exigida pelo professor */}
         <div>
           <label className="block text-sm font-semibold text-purple-700 dark:text-purple-300 mb-2">
-            Recorrência[cite: 2]
+            Recorrência
           </label>
           <select
             name="recurrence"
