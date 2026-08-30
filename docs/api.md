@@ -25,31 +25,46 @@ rota exige o cookie `vp_session`; ver [Autenticação](#autenticação).
 | `PATCH` | `/api/goals/:id` | sim | `200` | `400`, `404` |
 | `PATCH` | `/api/goals/:id/status` | sim | `200` | `400`, `404` |
 | `DELETE` | `/api/goals/:id` | sim | `204` | `404` |
+| `GET` | `/api/tasks` | sim | `200` | `400` |
+| `POST` | `/api/tasks` | sim | `201` | `400` |
+| `GET` | `/api/tasks/:id` | sim | `200` | `404` |
+| `PATCH` | `/api/tasks/:id` | sim | `200` | `400`, `404` |
+| `PATCH` | `/api/tasks/:id/status` | sim | `200` | `400`, `404` |
+| `DELETE` | `/api/tasks/:id` | sim | `204` | `404` |
+| `GET` | `/api/reminders` | sim | `200` | `400` |
+| `POST` | `/api/reminders` | sim | `201` | `400` |
+| `GET` | `/api/reminders/:id` | sim | `200` | `400`, `404` |
+| `PUT` | `/api/reminders/:id` | sim | `200` | `400`, `404` |
+| `DELETE` | `/api/reminders/:id` | sim | `204` | `400`, `404` |
 | `GET` | `/api/reports` | sim | `200` | `400` |
 | `GET` | `/api/dashboard` | sim | `200` | — |
-
-`:id` casa apenas com dígitos (`(\d+)` na rota). `/api/goals/abc` não é uma rota
-registrada, e cai no comportamento descrito em
-[Autenticação](#autenticação): `401` sem sessão, `404` com sessão.
 
 Toda rota autenticada devolve `401` sem sessão, e toda rota pode devolver `500`
 — os dois casos valem para a tabela inteira e não se repetem em cada linha.
 
+### Um id não numérico não responde igual em toda a API
+
+`Goal` e `Task` registram a rota como `(\d+)`: `/api/goals/abc` simplesmente
+**não é uma rota registrada**, e cai no comportamento de caminho desconhecido
+descrito em [Autenticação](#autenticação) — `401` sem sessão, `404` com sessão.
+
+`Reminder` registra `([^/]*)` e valida o id no handler, então
+`/api/reminders/abc` responde **400** com `code="validation_error"`.
+
+A diferença é real e o cliente precisa saber dela. Não a esconda tratando `404`
+e `400` como o mesmo caso.
+
 ## O que ainda não existe
 
 Documentar o que não existe é tão parte do contrato quanto documentar o que
-existe: sem isto o frontend descobre a ausência em tempo de execução.
+existe: sem isto o cliente descobre a ausência em tempo de execução.
 
-| Entidade | Tipo JSON | Endpoints |
-|---|---|---|
-| `Goal` | sim | **sim**, os seis acima |
-| `Reminder` | sim (ver [Reminder](#reminder)) | **não** |
-| `Task` | não | **não** |
-| `User` | não | só o que `/api/auth/*` expõe |
+`User` não tem endpoints de CRUD. O que existe é o que `/api/auth/*` expõe:
+criar conta, abrir e encerrar sessão e ler o próprio perfil. Não há como listar
+usuários, editar nome ou e-mail, nem trocar senha pela API.
 
-`Reminder` tem representação JSON definida e testada, mas **nenhuma rota** a
-serve ainda. `Task` não tem nem uma coisa nem outra. Enquanto isso não mudar, a
-única entidade de domínio consumível por HTTP é `Goal`.
+`Goal`, `Task` e `Reminder` têm representação JSON **e** endpoints, todos na
+tabela acima.
 
 ## Onde está o código
 
@@ -59,13 +74,18 @@ serve ainda. `Task` não tem nem uma coisa nem outra. Enquanto isso não mudar, 
   `back-end/src/api/http/api_server.cpp`
 - Autenticação: `back-end/src/api/http/routes/auth_routes.cpp`
 - Rotas de `Goal`: `back-end/src/api/http/routes/goal_routes.cpp`
+- Rotas de `Task`: `back-end/src/api/http/routes/task_routes.cpp`
 - Relatórios: `back-end/include/virtual_planner/api/http/routes/reporting_routes.hpp`
   e `back-end/src/api/http/routes/reporting_routes.cpp`
+- Endpoints de `Reminder`: `back-end/include/virtual_planner/api/http/routes/reminder_routes.hpp`
+  e `back-end/src/api/http/routes/reminder_routes.cpp`
 - Mapeamento de erro: `back-end/src/api/http/error_response.cpp`
 - Testes: `back-end/tests/unit/api/json/shared_json_test.cpp` e
   `back-end/tests/integration/api/api_server_test.cpp`; os endpoints de
   relatórios são cobertos por
   `back-end/tests/integration/api/reporting_routes_test.cpp`
+- Testes HTTP de Reminder:
+  `back-end/tests/integration/api/reminder_routes_test.cpp`
 
 A serialização vive em `api`, não em `domain`: o domínio não conhece JSON e não
 depende de `nlohmann/json`. As conversões reaproveitam `domain::to_string` e os
@@ -193,8 +213,8 @@ não existe mais, o servidor encerra a sessão e responde **401** com
 
 ## Escopo por dono
 
-Todo recurso pertence a um usuário. As rotas de `Goal` e de relatórios operam
-exclusivamente sobre o que é de quem chamou.
+As rotas de `Goal`, de `Task` e de relatórios operam exclusivamente sobre o que
+é de quem chamou.
 
 Pedir um recurso de outra pessoa responde **404**, e não 403: um 403
 confirmaria ao chamador que aquele identificador existe. Vale para leitura,
@@ -203,6 +223,20 @@ atualização, mudança de status e remoção.
 A verificação vive na assinatura do repositório
 (`find_by_id(id, user_id)`), e não em cada handler — assim uma rota nova não
 consegue esquecer de verificar, porque não compila sem o dono.
+
+### `Reminder` é a exceção, e isso é um defeito conhecido
+
+`ReminderRepository` **não recebe o dono em nenhum método**
+(`back-end/include/virtual_planner/persistence/reminder_repository.hpp`).
+Na prática, com dois usuários registrados, os dois enxergam, editam e removem
+os mesmos lembretes.
+
+Está documentado aqui porque é o contrato observável hoje, não porque seja
+aceitável. É a mesma classe de falha que a issue #112 fechou para `Goal`, e
+precisa da mesma correção: o dono na assinatura do repositório, e não uma
+checagem repetida em cada handler.
+
+**Não construa nada sobre a suposição de que lembrete é privado.**
 
 ## `GET /api/health`
 
@@ -617,11 +651,139 @@ Remove uma meta pelo identificador.
 Uma remoção bem-sucedida responde **204** sem corpo. Um identificador
 inexistente responde **404** com `code="not_found"`.
 
-## Reminder
+## Task
 
-> **Tipo, não endpoint.** O que está abaixo é a representação JSON de
-> `Reminder`, já implementada e testada. Nenhuma rota a serve ainda — ver
-> [O que ainda não existe](#o-que-ainda-não-existe).
+A representação JSON de `Task` reutiliza as conversões compartilhadas de
+`Category`, `Date`, `TimeSlot`, `Priority` e `TaskStatus` definidas em P-29.0.
+
+Exemplo:
+
+```json
+{
+  "id": 5,
+  "description": "Implementar a estrutura do AppShell",
+  "category": "Work",
+  "date": "2026-08-29",
+  "time_slot": {
+    "start": 480,
+    "end": 540
+  },
+  "shift": "Morning",
+  "priority": "High",
+  "status": "Pending"
+}
+```
+
+| Campo | Tipo JSON | Significado |
+|---|---|---|
+| `id` | inteiro sem sinal | Identificador da tarefa |
+| `description` | string | Descrição da tarefa |
+| `category` | string | `Category`, usando a representação compartilhada |
+| `date` | string | Data da tarefa, em ISO 8601 `YYYY-MM-DD` |
+| `time_slot` | objeto | `TimeSlot`, com `start` e `end` em minutos desde a meia-noite |
+| `shift` | string | `Shift` **derivado** de `time_slot.start`; ver abaixo |
+| `priority` | string | `Priority`, usando a representação compartilhada |
+| `status` | string | `TaskStatus`, usando a representação compartilhada |
+
+### Agendamento: intervalo e turno
+
+`Task` tem **uma** forma de agendamento no domínio — o `time_slot`. O turno
+(`shift`) não é um campo da entidade: ele é **derivado** do início do
+`time_slot`, com os mesmos limites de `reporting::shift_of`:
+
+| `shift` | Faixa de `time_slot.start` |
+|---|---|
+| `"Morning"` | `[00:00, 12:00)` — `start` em `[0, 720)` |
+| `"Afternoon"` | `[12:00, 18:00)` — `start` em `[720, 1080)` |
+| `"Evening"` | `[18:00, 24:00)` — `start` em `[1080, 1440)` |
+
+Regras do formato, para não haver ambiguidade sobre qual campo manda:
+
+- Na **saída** (`to_json`), `shift` está sempre presente e é sempre coerente com
+  `time_slot`. É um rótulo de leitura; o `time_slot` é a fonte de verdade.
+- Na **entrada** (`task_from_json`), `time_slot` é obrigatório. `shift` é
+  opcional: se vier, precisa ser igual ao turno derivado de `time_slot`, senão
+  o payload é rejeitado com **400**. Nunca se usa `shift` para inferir horário.
+
+Um agendamento "por turno" — sem horário exato — depende de `Task` ter turno
+nativo (lacuna A da P-62 / #34, ainda não entregue). Enquanto isso, uma tarefa
+de manhã é simplesmente uma tarefa cujo `time_slot` começa antes das 12:00.
+
+Funções:
+
+```cpp
+nlohmann::json to_json(const domain::Task& task);
+domain::Task task_from_json(const nlohmann::json& value);
+```
+
+### Endpoints de Task
+
+Os endpoints de Task reutilizam a representação JSON acima. Erros de domínio
+seguem o mapeamento único de [Erros](#erros): `400` para validação, `404` para
+não encontrado, `500` genérico.
+
+| Método e rota | Resposta |
+| --- | --- |
+| `GET /api/tasks` | **200** com um array de tarefas (ver filtros abaixo) |
+| `GET /api/tasks/:id` | **200** com a tarefa; **404** se o id não existe |
+| `POST /api/tasks` | **201** com a tarefa criada e header `Location: /api/tasks/:id` |
+| `PATCH /api/tasks/:id` | **200** com a tarefa atualizada; **404** se o id não existe |
+| `PATCH /api/tasks/:id/status` | **200** com a tarefa; **404** se o id não existe |
+| `DELETE /api/tasks/:id` | **204** sem corpo; **404** se o id não existe |
+
+#### `GET /api/tasks`
+
+Lista as tarefas. Todos os filtros são passados por query string, são
+**opcionais** e combinam com **E**: uma tarefa só entra na resposta se atende a
+todos os filtros informados. Sem nenhum filtro, retorna todas.
+
+| Parâmetro | Valor | Efeito |
+| --- | --- | --- |
+| `start_date` | `Date` ISO 8601 `YYYY-MM-DD` | mantém tarefas com `date >= start_date` |
+| `end_date` | `Date` ISO 8601 `YYYY-MM-DD` | mantém tarefas com `date <= end_date` |
+| `category` | `Category` | mantém tarefas dessa categoria |
+| `priority` | `Priority` | mantém tarefas dessa prioridade |
+| `status` | `TaskStatus` | mantém tarefas nesse status |
+
+`start_date` e `end_date` formam um intervalo inclusivo; cada limite pode
+aparecer sozinho. Se os dois vierem e `start_date > end_date`, a resposta é
+**400**. Um valor que não corresponde a nenhum enum, ou uma data inexistente
+(`2026-02-30`), também responde **400** com `code="validation_error"`.
+
+#### `POST /api/tasks`
+
+Cria uma tarefa. Corpo:
+
+```json
+{
+  "description": "Implementar a estrutura do AppShell",
+  "category": "Work",
+  "date": "2026-08-29",
+  "time_slot": { "start": 480, "end": 540 },
+  "priority": "High"
+}
+```
+
+Os cinco campos são obrigatórios. `id` não é aceito (é gerado pelo repositório)
+e `status` também não: toda tarefa nova nasce `"Pending"`. `shift` é derivado e
+não é lido na entrada. Um campo faltando, um valor de enum inválido, um
+`time_slot` que viola as invariantes ou um JSON malformado respondem **400**.
+
+#### `PATCH /api/tasks/:id`
+
+Atualização parcial. Aceita qualquer subconjunto de `description`, `category`,
+`date`, `time_slot` e `priority`; os campos omitidos são preservados. `status`
+**não** é alterado por aqui — use `PATCH /api/tasks/:id/status`. `shift` no
+corpo é ignorado.
+
+#### `PATCH /api/tasks/:id/status`
+
+Corpo `{ "status": "Executed" }`. `status` é obrigatório e aceita qualquer valor
+de `TaskStatus` (`"Pending"`, `"Executed"`, `"PartiallyExecuted"`,
+`"Cancelled"`, `"Postponed"`); não há máquina de estados. Um valor inválido ou
+o campo ausente respondem **400**.
+
+## Reminder
 
 A representação JSON de `Reminder` reutiliza as conversões compartilhadas de
 `Category`, `Date`, `TimeSlot`, `ReminderType` e `ReminderRecurrence` definidas
@@ -658,6 +820,103 @@ Exemplo:
 `"recurrence": "Once"`; um lembrete recorrente usa `"Daily"`, `"Weekly"` ou
 `"Monthly"`. A recorrência não é inferida de outro campo, e `date` funciona
 como data-âncora da regra recorrente.
+
+## `GET /api/reminders`
+
+Lista as ocorrências de Reminder em uma janela inclusiva. A expansão de
+recorrências é realizada por `ListRemindersUseCase`; a camada HTTP apenas
+converte os parâmetros e serializa o resultado.
+
+| Parâmetro | Obrigatório | Valores/formato |
+|---|---|---|
+| `start_date` | sim | data ISO 8601 `YYYY-MM-DD` |
+| `end_date` | sim | data ISO 8601 `YYYY-MM-DD` |
+| `type` | não | um valor de `ReminderType` |
+| `recurrence` | não | `Once`, `Daily`, `Weekly` ou `Monthly` |
+
+Os filtros opcionais usam semântica AND. A janela inclui `start_date` e
+`end_date`, e uma lista sem resultados responde 200 com `[]`.
+
+Cada item da resposta separa a data-base persistida da ocorrência expandida:
+
+```json
+[
+  {
+    "reminder": {
+      "id": 42,
+      "description": "Reunião semanal",
+      "category": "Work",
+      "date": "2026-08-03",
+      "time_slot": { "start": 540, "end": 600 },
+      "type": "Meeting",
+      "recurrence": "Weekly"
+    },
+    "occurrence_date": "2026-08-10"
+  }
+]
+```
+
+`reminder.date` permanece sendo a data-base da entidade. `occurrence_date`
+existe somente na resposta e não é persistido.
+
+Parâmetros ausentes, datas inválidas, janela invertida ou enums desconhecidos
+respondem 400 com `code = "validation_error"`, conforme a seção de erros.
+
+## `GET /api/reminders/:id`
+
+Retorna **a regra** do lembrete, e não uma ocorrência expandida — é o que a
+tela de edição precisa carregar. A listagem acima expande um recorrente em
+várias ocorrências dentro da janela; aqui a resposta é a entidade em si, com
+`recurrence` e a `date`-âncora.
+
+```http
+GET /api/reminders/42
+```
+
+Responde **200** com a representação JSON de `Reminder`. Um identificador que
+não existe responde **404** com `code = "not_found"`; um que não seja numérico
+responde **400** com `code = "validation_error"`.
+
+## `POST /api/reminders`
+
+Cria um Reminder por meio de `CreateReminderUseCase`. O cliente envia os seis
+campos editáveis, sem `id`:
+
+```json
+{
+  "description": "Revisar paradigmas de C++",
+  "category": "Study",
+  "date": "2026-08-28",
+  "time_slot": { "start": 540, "end": 600 },
+  "type": "Study",
+  "recurrence": "Once"
+}
+```
+
+O ID é gerado pelo repositório. Um eventual `id` presente no body não controla
+o identificador persistido. O sucesso responde 201 com
+`Content-Type: application/json` e o Reminder completo no formato da P-29.3,
+incluindo o ID gerado.
+
+JSON malformado, body que não seja objeto, campo ausente ou valor inválido
+respondem 400 com `code = "validation_error"`.
+
+## `PUT /api/reminders/:id`
+
+Substitui todos os seis campos editáveis por meio de
+`UpdateReminderUseCase`. O body tem o mesmo formato do POST. O ID do path é a
+única autoridade; um eventual `id` no body é ignorado.
+
+O sucesso responde 200 com `Content-Type: application/json` e o Reminder
+completo atualizado. ID de path inválido ou payload inválido respondem 400 com
+`code = "validation_error"`. Reminder inexistente responde 404 com
+`code = "not_found"`.
+
+## `DELETE /api/reminders/:id`
+
+Exclui o Reminder por meio de `DeleteReminderUseCase`. O sucesso responde 204
+sem corpo. ID de path inválido responde 400 com `code = "validation_error"`;
+Reminder inexistente responde 404 com `code = "not_found"`.
 
 ## Exemplo de uso em uma entidade
 
