@@ -68,7 +68,7 @@ export function ReminderFormPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-8">
+    <div className="p-6 space-y-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-full transition-colors">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-slate-100">
           {isEditing ? "Editar Lembrete" : "Novo Lembrete"}
