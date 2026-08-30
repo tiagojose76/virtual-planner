@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 import type { Task, Goal, Reminder } from "../types/domain";
 
@@ -15,7 +16,6 @@ export function DashboardPage() {
     async function loadDashboardData() {
       setIsLoading(true);
       try {
-        // Dispara as 3 requisições ao mesmo tempo (Concorrência)
         const [fetchedTasks, fetchedGoals, fetchedReminders] =
           await Promise.all([
             virtualPlannerApi.getTasks(),
@@ -36,7 +36,6 @@ export function DashboardPage() {
     loadDashboardData();
   }, []);
 
-  // Lógica de Negócio: Filtragem de dados com complexidade O(N)
   const todayTasks = tasks.filter((t) => t.date === TODAY);
   const pendingTasks = tasks.filter((t) => t.status === "Pending");
   const inProgressGoals = goals.filter((g) => g.status === "In Progress");
@@ -53,11 +52,10 @@ export function DashboardPage() {
       ? Math.round((completedTasksCount / todayTasks.length) * 100)
       : 0;
 
-  //(Se estiver carregando, bloqueia a renderização principal)
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <span className="text-purple-500 font-bold text-xl animate-pulse">
+      <div className="p-6 space-y-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-full transition-colors">
+        <span className="text-purple-600 dark:text-purple-500 font-bold text-xl animate-pulse">
           Carregando seu planejamento...
         </span>
       </div>
@@ -65,35 +63,43 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <header className="flex justify-between items-center border-b border-purple-900/30 pb-4">
-        <h1 className="text-3xl font-bold text-white">Resumo do Dia</h1>
+    <div className="p-6 space-y-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-full transition-colors">
+      <header className="flex justify-between items-center border-b border-gray-200 dark:border-purple-900/30 pb-4">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Resumo do Dia
+        </h1>
 
-        {/* Botões de Ação Rápida */}
+        {/* Botões de Ação Rápida AGORA FUNCIONANDO */}
         <div className="flex gap-3">
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+          <Link
+            to="/tasks/new"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md font-medium transition-colors shadow-sm"
+          >
             + Nova Tarefa
-          </button>
-          <button className="border border-purple-500 text-purple-400 hover:bg-purple-500/10 px-4 py-2 rounded-md font-medium transition-colors">
+          </Link>
+          <Link
+            to="/goals/new"
+            className="border border-purple-500 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 px-4 py-2 rounded-md font-medium transition-colors"
+          >
             + Nova Meta
-          </button>
+          </Link>
         </div>
       </header>
 
       <div className="space-y-6">
         {/* Indicador Geral de Produtividade */}
-        <div className="bg-white dark:bg-slate-900 border border-purple-900/30 rounded-xl p-5 shadow-lg">
+        <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-purple-900/30 rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-sm font-semibold text-purple-300 uppercase tracking-wider">
+            <h2 className="text-sm font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
               Produtividade de Hoje
             </h2>
-            <span className="text-xl font-bold text-white">
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
               {productivityRate}%
             </span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-2.5">
+          <div className="w-full bg-gray-200 dark:bg-slate-800 rounded-full h-2.5">
             <div
-              className="bg-purple-500 h-2.5 rounded-full transition-all duration-500"
+              className="bg-purple-600 h-2.5 rounded-full transition-all duration-500"
               style={{ width: `${productivityRate}%` }}
             ></div>
           </div>
@@ -101,38 +107,45 @@ export function DashboardPage() {
 
         {/* 4 Cards Analíticos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-slate-900 border border-purple-900/30 rounded-xl p-5 shadow-lg">
-            <h3 className="text-purple-400 font-medium mb-1">Pendentes</h3>
-            <p className="text-3xl font-bold text-slate-100">
+          <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-purple-900/30 rounded-xl p-5 shadow-sm">
+            <h3 className="text-purple-700 dark:text-purple-400 font-medium mb-1">
+              Pendentes
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">
               {pendingTasksCount}
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-purple-900/30 rounded-xl p-5 shadow-lg">
-            <h3 className="text-green-400 font-medium mb-1">Concluídas</h3>
-            <p className="text-3xl font-bold text-slate-100">
+          <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-purple-900/30 rounded-xl p-5 shadow-sm">
+            <h3 className="text-green-600 dark:text-green-400 font-medium mb-1">
+              Concluídas
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">
               {completedTasksCount}
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-purple-900/30 rounded-xl p-5 shadow-lg">
-            <h3 className="text-blue-400 font-medium mb-1">Metas Ativas</h3>
-            <p className="text-3xl font-bold text-slate-100">
+          <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-purple-900/30 rounded-xl p-5 shadow-sm">
+            <h3 className="text-blue-600 dark:text-blue-400 font-medium mb-1">
+              Metas Ativas
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">
               {inProgressGoals.length}
             </p>
           </div>
-          <div className="bg-white dark:bg-slate-900 border border-purple-900/30 rounded-xl p-5 shadow-lg">
-            <h3 className="text-amber-400 font-medium mb-1">Lembretes</h3>
-            <p className="text-3xl font-bold text-slate-100">
+          <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-purple-900/30 rounded-xl p-5 shadow-sm">
+            <h3 className="text-amber-600 dark:text-amber-400 font-medium mb-1">
+              Lembretes
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">
               {todayReminders.length}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Grid Layout (Equivalente a matrizes visuais) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Coluna 1: Tarefas */}
-        <section className="col-span-2 bg-gray-900 rounded-lg p-5 border border-gray-800 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 text-purple-300">
+        <section className="col-span-2 bg-gray-50 dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
+          <h2 className="text-xl font-semibold mb-4 text-purple-700 dark:text-purple-300">
             Tarefas de Hoje
           </h2>
           {todayTasks.length === 0 ? (
@@ -169,15 +182,15 @@ export function DashboardPage() {
 
         {/* Coluna 2: Metas e Lembretes */}
         <div className="space-y-6">
-          <section className="bg-gray-900 rounded-lg p-5 border border-gray-800 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-purple-300">
+          <section className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 text-purple-700 dark:text-purple-300">
               Metas em Andamento
             </h2>
             <ul className="space-y-2">
               {inProgressGoals.map((goal) => (
                 <li
                   key={goal.id}
-                  className="text-sm text-gray-300 flex items-center gap-2"
+                  className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2"
                 >
                   <div className="w-2 h-2 rounded-full bg-purple-500"></div>
                   {goal.description}
@@ -186,17 +199,17 @@ export function DashboardPage() {
             </ul>
           </section>
 
-          <section className="bg-gray-900 rounded-lg p-5 border border-gray-800 shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-purple-300">
+          <section className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 text-purple-700 dark:text-purple-300">
               Próximos Lembretes
             </h2>
             <ul className="space-y-2">
               {todayReminders.map((reminder) => (
                 <li
                   key={reminder.id}
-                  className="text-sm text-gray-300 bg-purple-900/20 p-2 rounded border border-purple-500/30"
+                  className="text-sm text-gray-700 dark:text-gray-300 bg-purple-50 dark:bg-purple-900/20 p-2 rounded border border-purple-200 dark:border-purple-500/30"
                 >
-                  <span className="block font-medium text-purple-400">
+                  <span className="block font-medium text-purple-700 dark:text-purple-400">
                     {reminder.type}
                   </span>
                   {reminder.description}

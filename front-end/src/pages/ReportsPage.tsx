@@ -42,7 +42,7 @@ export function ReportsPage() {
 
         //Filtra apenas as tarefas concluídas
         const completedTasks = allTasks.filter(
-          (t) => t.status === "Concluído" || t.status === "Executada",
+          (t) => t.status === "Executed" || t.status === "PartiallyExecuted",
         );
 
         const taskPercentage =
@@ -140,7 +140,7 @@ export function ReportsPage() {
   }, [filterType]);
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-8">
+    <div className="p-6 space-y-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-full transition-colors">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 dark:border-purple-900/30 pb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
