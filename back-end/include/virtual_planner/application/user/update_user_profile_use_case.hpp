@@ -8,8 +8,9 @@
 
 namespace virtual_planner::application {
 
-// Dados novos de perfil. So nome e email: sem senha nem qualquer campo de
-// credencial, porque autenticacao esta fora do escopo do projeto.
+// Dados novos de perfil. So nome e email: troca de senha nao passa por aqui,
+// e um campo de credencial neste struct viraria um caminho de escalonamento
+// silencioso no dia em que um endpoint aceitasse o corpo inteiro do cliente.
 struct UpdateUserProfileRequest
 {
     std::string name;
@@ -20,8 +21,10 @@ struct UpdateUserProfileRequest
 // Atualiza o perfil (nome e email) do usuario corrente.
 //
 // Mesma decisao de identidade do GetUserProfileUseCase: o id do usuario
-// corrente e injetado no construtor pelo composition root, nunca recebido
-// do chamador via execute().
+// corrente e injetado no construtor, nunca recebido no corpo de execute().
+// Quem constroi o caso de uso tira o id da sessao autenticada; aceita-lo como
+// parametro de entrada permitiria pedir o perfil de outra pessoa so trocando
+// um numero.
 class UpdateUserProfileUseCase
 {
 public:

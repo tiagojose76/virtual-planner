@@ -19,7 +19,7 @@ domain::User GetUserProfileUseCase::execute() const
     if (!user.has_value())
     {
         throw std::runtime_error(
-            "Current user not found. Expected the single-tenant user");
+            "Current user not found for the given id.");
     }
 
     return *user;
