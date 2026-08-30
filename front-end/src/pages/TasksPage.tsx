@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 import type { Category, Task, TaskStatus, Priority } from "../types/domain";
 import { getThemeColors, getPriorityColors } from "../utils/badgeStyles";
@@ -137,6 +136,37 @@ export function TasksPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Os dois filtros ja eram lidos em filteredTasks, mas nao havia
+              controle nenhum que os mudasse: na pratica ficavam presos em
+              "ALL". */}
+          <select
+            aria-label="Filtrar por status"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-purple-900/50 text-gray-700 dark:text-gray-200 rounded-xl px-3 py-2 text-xs font-medium shadow-sm focus:outline-none focus:border-purple-500 transition-colors"
+          >
+            <option value="ALL">Todos os status</option>
+            {(Object.keys(TASK_STATUS_LABELS) as TaskStatus[]).map((status) => (
+              <option key={status} value={status}>
+                {TASK_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+
+          <select
+            aria-label="Filtrar por categoria"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-purple-900/50 text-gray-700 dark:text-gray-200 rounded-xl px-3 py-2 text-xs font-medium shadow-sm focus:outline-none focus:border-purple-500 transition-colors"
+          >
+            <option value="ALL">Todas as categorias</option>
+            {(Object.keys(CATEGORY_LABELS) as Category[]).map((category) => (
+              <option key={category} value={category}>
+                {CATEGORY_LABELS[category]}
+              </option>
+            ))}
+          </select>
+
           <div className="bg-white dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-purple-900/50 flex items-center gap-1 shadow-sm">
             <button
               onClick={() => setLayoutMode("board")}

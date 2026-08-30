@@ -25,9 +25,25 @@ export function PlannerPage() {
           virtualPlannerApi.getReminders(),
         ]);
 
+        // Tarefa agendada por turno nao tem intervalo em minutos, e o
+        // planejamento e uma linha do tempo: sem inicio e fim ela nao tem
+        // onde ser desenhada. Antes disso os dois campos entravam como
+        // undefined — a deteccao de conflito comparava undefined e nunca
+        // acusava nada, e a ordenacao virava NaN.
+        const hasInterval = (
+            item: { startMinutes?: number; endMinutes?: number },
+        ): boolean =>
+          item.startMinutes !== undefined && item.endMinutes !== undefined;
+
         const dayTasks: TimeSlotItem[] = tasks
-          .filter((t) => t.date === SELECTED_DATE)
-          .map((t) => ({ ...t, id: `task-${t.id}`, type: "Task" }));
+          .filter((t) => t.date === SELECTED_DATE && hasInterval(t))
+          .map((t) => ({
+            ...t,
+            id: `task-${t.id}`,
+            type: "Task",
+            startMinutes: t.startMinutes as number,
+            endMinutes: t.endMinutes as number,
+          }));
 
         const dayReminders: TimeSlotItem[] = reminders
           .filter((r) => r.date === SELECTED_DATE)

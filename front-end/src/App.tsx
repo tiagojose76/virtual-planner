@@ -19,22 +19,10 @@ import { PlannerPage } from "./pages/PlannerPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { LoginPage } from "./pages/LoginPage";
+import { RequireSession } from "./components/RequireSession";
 
 type ThemeMode = "light" | "dark" | "system";
-
-function DashboardView() {
-  return (
-    <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-purple-900/30 shadow-xl transition-all duration-300">
-      <h3 className="text-xl font-bold text-slate-100 mb-2">
-        Visão Geral do Planejamento
-      </h3>
-      <p className="text-purple-300 text-sm">
-        Bem-vindo ao Virtual Planner. Utilize a barra lateral para navegar entre
-        Tarefas, Metas, Lembretes e o Calendário.
-      </p>
-    </div>
-  );
-}
 
 function MainLayout() {
   const location = useLocation();
@@ -58,10 +46,6 @@ function MainLayout() {
   // Mapeia a URL atual para a aba ativa do AppShell
   const currentTab = location.pathname.split("/")[1] || "dashboard";
 
-  const handleTabChange = (tab: string) => {
-    navigate(tab === "dashboard" ? "/" : `/${tab}`);
-  };
-
   const handleQuickCreate = () => {
     navigate("/tasks/new");
   };
@@ -69,7 +53,6 @@ function MainLayout() {
   return (
     <AppShell
       currentTab={currentTab}
-      setCurrentTab={handleTabChange}
       theme={theme}
       onThemeChange={setTheme}
       onQuickCreate={handleQuickCreate}
@@ -90,7 +73,9 @@ function MainLayout() {
         <Route path="/reminders" element={<RemindersPage />} />
         <Route path="/reminders/new" element={<ReminderFormPage />} />
         <Route path="/reminders/:id/edit" element={<ReminderFormPage />} />
+
         <Route path="/reports" element={<ReportsPage />} />
+
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
@@ -101,7 +86,23 @@ function MainLayout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <MainLayout />
+      <Routes>
+        {/* Fora do AppShell de proposito: a tela de login nao tem sidebar nem
+            barra superior, e nao pode exigir sessao para ser vista. */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Todo o resto so renderiza com sessao valida. Sem o guarda, quem nao
+            estivesse logado via o dashboard montado e vazio, com 401 no
+            console e nenhuma explicacao na tela. */}
+        <Route
+          path="*"
+          element={
+            <RequireSession>
+              <MainLayout />
+            </RequireSession>
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }

@@ -1,7 +1,13 @@
 name: Backend CI
 
 on:
+  # push so em main: em branch de PR o gatilho pull_request ja cobre, e ter os
+  # dois sem filtro de branch faz o mesmo commit rodar duas vezes (ver #76).
+  # Aqui o desperdicio e maior que no frontend, porque o job de integracao
+  # compila o libpqxx a partir do codigo-fonte.
   push:
+    branches:
+      - main
     paths:
       - "back-end/**"
       - "scripts/db-migrate.sh"
@@ -18,7 +24,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Debug primeiro: build padrão sem otimizações.
       - name: Configure (Debug)
@@ -41,6 +47,116 @@ jobs:
       - name: Test (Release)
         run: ctest --test-dir back-end/build-release --output-on-failure
 
+  json-and-http:
+    name: Build and test com JSON e HTTP
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # O build padrão é offline e não compila nem a serialização compartilhada
+      # (P-29.0) nem o servidor (P-28): as duas dependem de bibliotecas baixadas
+      # por FetchContent. Sem este job, `shared_json_test` e `api_server_test`
+      # nunca rodariam no CI.
+      #
+      # As duas configurações rodam no mesmo runner, como o job Debug+Release
+      # acima faz.
+
+      # JSON sozinho prova que cmake/json.cmake não depende de http.cmake —
+      # é a configuração que P-29.1 a P-29.4 usam.
+      - name: Configure (Release, só JSON)
+        run: >
+          cmake -S back-end -B back-end/build-json
+          -DCMAKE_BUILD_TYPE=Release
+          -DVIRTUAL_PLANNER_WITH_JSON=ON
+
+      - name: Build (só JSON)
+        run: cmake --build back-end/build-json
+
+      - name: Test (só JSON)
+        run: ctest --test-dir back-end/build-json --output-on-failure
+
+      # HTTP liga JSON junto e acrescenta o servidor. `api_server_test` abre
+      # uma porta efêmera em 127.0.0.1 e fala HTTP de verdade com ela.
+      - name: Configure (Release, com HTTP)
+        run: >
+          cmake -S back-end -B back-end/build-http
+          -DCMAKE_BUILD_TYPE=Release
+          -DVIRTUAL_PLANNER_WITH_HTTP=ON
+
+      - name: Build (com HTTP)
+        run: cmake --build back-end/build-http
+
+      - name: Test (com HTTP)
+        run: ctest --test-dir back-end/build-http --output-on-failure
+
+  coverage:
+    name: Cobertura de testes
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install gcovr
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcovr
+
+      # Com HTTP ligado para que api/http e api/json entrem na medicao. Sem
+      # isso a cobertura ignoraria toda a camada de fronteira.
+      - name: Configure (com cobertura)
+        run: >
+          cmake -S back-end -B back-end/build-coverage
+          -DCMAKE_BUILD_TYPE=Debug
+          -DVIRTUAL_PLANNER_WITH_COVERAGE=ON
+          -DVIRTUAL_PLANNER_WITH_HTTP=ON
+
+      - name: Build
+        run: cmake --build back-end/build-coverage
+
+      - name: Test
+        run: ctest --test-dir back-end/build-coverage --output-on-failure
+
+      # --exclude tira os testes e as dependencias baixadas por FetchContent:
+      # medir cobertura do proprio teste ou do httplib nao diz nada sobre o
+      # codigo do projeto.
+      - name: Generate coverage report
+        run: |
+          mkdir -p back-end/build-coverage/coverage
+          gcovr \
+            --root back-end \
+            --exclude 'back-end/tests/' \
+            --exclude '.*/_deps/.*' \
+            --html-details back-end/build-coverage/coverage/index.html \
+            --txt back-end/build-coverage/coverage/summary.txt \
+            --print-summary \
+            back-end/build-coverage
+
+      # O numero fica visivel na aba de checks do PR, sem precisar baixar o
+      # artefato. A issue pede visibilidade, nao um gate.
+      - name: Publish coverage to the job summary
+        if: always()
+        run: |
+          {
+            echo '## Cobertura de testes do backend'
+            echo
+            echo '```'
+            cat back-end/build-coverage/coverage/summary.txt
+            echo '```'
+            echo
+            echo 'Meta minima acordada: ver docs/conventions.md.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload HTML report
+        if: always()
+        # v6 e a primeira major desta action em node24: v4 e v5 ainda
+        # declaram node20 (verificado no action.yml de cada tag).
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: back-end/build-coverage/coverage/
+          retention-days: 14
+
   postgres-integration:
     name: Build and test com PostgreSQL (migrations + integração real)
     runs-on: ubuntu-24.04
@@ -50,7 +166,7 @@ jobs:
         env:
           POSTGRES_DB: virtual_planner
           POSTGRES_USER: virtual_planner
-          POSTGRES_PASSWORD: change-me
+          POSTGRES_PASSWORD: ci-ephemeral-only
         ports:
           - 5432:5432
         options: >-
@@ -59,20 +175,23 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # Credenciais de teste do service container efêmero do CI, mesmos
-      # valores padrão já usados em docker-compose.yml e back-end/.env.example.
-      # Não é segredo real: o banco existe só durante o job e é descartado.
+      # Credenciais do service container efêmero do CI. Não é segredo real: o
+      # banco existe só durante o job e é descartado.
+      #
+      # O valor é deliberadamente distinto de qualquer default do repositório,
+      # para que um `grep change-me` acuse configuração insegura de verdade e
+      # não este job.
       POSTGRES_HOST: localhost
       POSTGRES_PORT: "5432"
       POSTGRES_DB: virtual_planner
       POSTGRES_USER: virtual_planner
-      POSTGRES_PASSWORD: change-me
+      POSTGRES_PASSWORD: ci-ephemeral-only
       VP_USE_POSTGRES: "true"
       # Mesma versão de libpqxx usada no desenvolvimento local.
       LIBPQXX_VERSION: "8.0.2"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # O adapter usa a API libpqxx 8.x: pqxx::params{transaction, ...},
       # result::one_row() e result::no_rows(). Essas APIs NÃO existem no
@@ -90,7 +209,7 @@ jobs:
 
       - name: Cache libpqxx ${{ env.LIBPQXX_VERSION }}
         id: cache-libpqxx
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /opt/libpqxx
           key: libpqxx-${{ env.LIBPQXX_VERSION }}-${{ runner.os }}-ubuntu-24.04

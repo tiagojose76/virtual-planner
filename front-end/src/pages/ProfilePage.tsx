@@ -1,24 +1,40 @@
 import { useState, useEffect } from "react";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
 
+const STORAGE_KEY = "@VP:user";
+
+const DEFAULT_USER = {
+  id: 1,
+  name: "Desenvolvedor Backend",
+  email: "dev@academico.br",
+};
+
+// Lido uma vez, na inicializacao do estado. Ler dentro do efeito e chamar
+// setUser fazia a tela renderizar vazia antes de renderizar preenchida, de
+// graca. `localStorage` tambem pode lancar (janela anonima, site data
+// bloqueado), e ai o padrao vale.
+function storedUser(): typeof DEFAULT_USER {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved === null ? DEFAULT_USER : JSON.parse(saved);
+  } catch {
+    return DEFAULT_USER;
+  }
+}
+
 export function ProfilePage() {
-  const [user, setUser] = useState({ id: 1, name: "", email: "" });
+  const [user, setUser] = useState(storedUser);
   const [isEditing, setIsEditing] = useState(false);
   const [stats, setStats] = useState({ tasks: 0, goals: 0, reminders: 0 });
 
   useEffect(() => {
-    // Carrega dados do usuário
-    const saved = localStorage.getItem("@VP:user");
-    if (saved) {
-      setUser(JSON.parse(saved));
-    } else {
-      const defaultUser = {
-        id: 1,
-        name: "Desenvolvedor Backend",
-        email: "dev@academico.br",
-      };
-      setUser(defaultUser);
-      localStorage.setItem("@VP:user", JSON.stringify(defaultUser));
+    // Primeira visita: grava o padrao para que a proxima leitura ja o encontre.
+    try {
+      if (localStorage.getItem(STORAGE_KEY) === null) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_USER));
+      }
+    } catch {
+      // Sem armazenamento a tela continua funcionando, so nao lembra a edicao.
     }
 
     // Carrega métricas para preencher e enriquecer a tela
@@ -43,7 +59,7 @@ export function ProfilePage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("@VP:user", JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     setIsEditing(false);
   };
 

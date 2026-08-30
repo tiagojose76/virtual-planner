@@ -1,9 +1,24 @@
 #include "virtual_planner/domain/entities/reminder.hpp"
+#include "virtual_planner/domain/text.hpp"
+#include "virtual_planner/shared/errors.hpp"
 
-#include <stdexcept>
 #include <utility>
 
 namespace virtual_planner::domain {
+
+namespace {
+
+void validate_description(const std::string& description)
+{
+    if (is_blank(description))
+    {
+        throw shared::DomainError(
+            "Reminder description cannot be empty or blank."
+        );
+    }
+}
+
+}
 
 Reminder::Reminder(
     std::uint64_t id,
@@ -22,12 +37,7 @@ Reminder::Reminder(
       type_(type),
       recurrence_(recurrence)
 {
-    if (description_.empty())
-    {
-        throw std::invalid_argument(
-            "Reminder description cannot be empty."
-        );
-    }
+    validate_description(description_);
 }
 
 std::uint64_t Reminder::id() const
@@ -67,13 +77,7 @@ ReminderRecurrence Reminder::recurrence() const
 
 void Reminder::update_description(std::string description)
 {
-    if (description.empty())
-    {
-        throw std::invalid_argument(
-            "Reminder description cannot be empty."
-        );
-    }
-
+    validate_description(description);
     description_ = std::move(description);
 }
 
@@ -102,4 +106,4 @@ void Reminder::change_recurrence(ReminderRecurrence recurrence)
     recurrence_ = recurrence;
 }
 
-} // namespace virtual_planner::domain
+}

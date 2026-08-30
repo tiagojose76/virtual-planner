@@ -3,6 +3,7 @@ import type { SubmitEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import type { Goal } from "../types/domain";
 import { virtualPlannerApi } from "../lib/api/virtualPlannerApi";
+import { formatDateForInput } from "../lib/formatters";
 
 export type GoalFormData = Omit<Goal, "id">;
 
@@ -11,24 +12,29 @@ export function GoalFormPage() {
   const navigate = useNavigate();
   const isEditing = Boolean(id);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing);
   const [formData, setFormData] = useState<GoalFormData>({
     description: "",
     category: "Study", // Usando estritamente a Category do domain.ts
     status: "In Progress", // Usando estritamente o GoalStatus do domain.ts
     period: "Monthly", // Usando estritamente o GoalPeriod do domain.ts
+    reference_date: formatDateForInput(),
   });
 
   useEffect(() => {
     if (isEditing && id) {
-      setIsLoading(true);
       virtualPlannerApi
         .getGoals()
         .then((goals) => {
           const goalFound = goals.find((g) => g.id === Number(id));
           if (goalFound) {
-            const { id: _, ...dataWithoutId } = goalFound;
-            setFormData(dataWithoutId);
+            setFormData({
+              description: goalFound.description,
+              category: goalFound.category,
+              status: goalFound.status,
+              period: goalFound.period,
+              reference_date: goalFound.reference_date,
+            });
           }
         })
         .catch((err) => console.error("Erro ao carregar meta:", err))
@@ -65,7 +71,7 @@ export function GoalFormPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-full transition-colors">
+    <div className="max-w-2xl mx-auto py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-slate-100">
           {isEditing ? "Editar Meta" : "Nova Meta"}
@@ -98,7 +104,7 @@ export function GoalFormPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-purple-300 mb-2">
               Categoria
@@ -117,6 +123,21 @@ export function GoalFormPage() {
               <option value="PersonalProjects">Projetos Pessoais</option>
               <option value="Study">Estudo</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-purple-300 mb-2">
+              Data de Referência
+            </label>
+            <input
+              type="date"
+              name="reference_date"
+              value={formData.reference_date}
+              onChange={handleChange}
+              required
+              disabled={isLoading}
+              className="w-full bg-slate-950 border border-purple-900/50 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-all [color-scheme:dark] disabled:opacity-50"
+            />
           </div>
 
           <div>

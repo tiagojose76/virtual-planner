@@ -7,7 +7,6 @@ type ThemeMode = "light" | "dark" | "system";
 interface AppShellProps {
   children?: ReactNode;
   currentTab: string;
-  setCurrentTab: (tab: string) => void;
   onQuickCreate: () => void;
   theme: ThemeMode;
   onThemeChange?: (theme: ThemeMode) => void;
@@ -16,7 +15,6 @@ interface AppShellProps {
 export const AppShell: FC<AppShellProps> = ({
   children,
   currentTab,
-  setCurrentTab,
   onQuickCreate,
   theme,
   onThemeChange,
@@ -25,7 +23,7 @@ export const AppShell: FC<AppShellProps> = ({
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-gray-950 text-slate-900 dark:text-slate-200 overflow-hidden transition-colors duration-300">
-      <Sidebar currentTab={activeTab} setCurrentTab={setCurrentTab} />
+      <Sidebar />
 
       <div className="flex flex-col flex-1 w-full overflow-hidden">
         <Header
