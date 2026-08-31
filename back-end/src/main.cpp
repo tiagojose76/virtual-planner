@@ -10,6 +10,7 @@
 #include "virtual_planner/persistence/memory/repositories.hpp"
 #include "virtual_planner/persistence/repository_set.hpp"
 #include "virtual_planner/shared/errors.hpp"
+#include "virtual_planner/infrastructure/postgres/postgres_user_repository.hpp"
 
 #if defined(VIRTUAL_PLANNER_WITH_HTTP)
 #include "virtual_planner/api/http/api_server.hpp"
@@ -19,6 +20,7 @@
 #include "virtual_planner/api/http/server_config.hpp"
 #include "virtual_planner/api/http/routes/goal_routes.hpp"
 #include "virtual_planner/api/http/routes/task_routes.hpp"
+
 #endif
 
 #if defined(VIRTUAL_PLANNER_WITH_POSTGRES)
@@ -84,6 +86,8 @@ int main() {
     std::optional<virtual_planner::infrastructure::postgres::PostgresGoalRepository> postgres_goals;
     std::optional<virtual_planner::infrastructure::postgres::PostgresReminderRepository> postgres_reminders;
     std::optional<virtual_planner::infrastructure::postgres::PostgresTaskRepository> postgres_tasks;
+    std::optional<virtual_planner::infrastructure::postgres::PostgresUserRepository> postgres_users;
+
 
     if (postgres_enabled())
     {
@@ -95,11 +99,14 @@ int main() {
       postgres_goals.emplace(*database);
       postgres_reminders.emplace(*database);
       postgres_tasks.emplace(*database);
+      postgres_users.emplace(*database);
 
       repositories.goals = &*postgres_goals;
       repositories.reminders = &*postgres_reminders;
       repositories.tasks = &*postgres_tasks;
+      repositories.users = &*postgres_users;
       health_database = &*database;
+      
     }
 #else
     if (postgres_enabled())
