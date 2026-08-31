@@ -1,23 +1,38 @@
 #pragma once
+#include <cstdint>
 
-#include "virtual_planner/persistence/user_repository.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_database.hpp"
-#include <memory>
-#include <optional>
-#include <string>
+#include "virtual_planner/persistence/user_repository.hpp"
 
-namespace virtual_planner::infrastructure::postgres {
+#if defined(VIRTUAL_PLANNER_WITH_POSTGRES)
 
-class PostgresUserRepository : public persistence::UserRepository {
+namespace virtual_planner::infrastructure::postgres
+{
+
+class PostgresUserRepository final
+    : public persistence::UserRepository
+{
 public:
-    explicit PostgresUserRepository(std::shared_ptr<PostgresDatabase> database);
+    explicit PostgresUserRepository(PostgresDatabase& database);
 
-    domain::User save(const domain::User& user) override;
-    std::optional<domain::User> find_by_id(int id) const override;
-    std::optional<domain::User> find_by_email(const std::string& email) const override;
+    void save(const domain::User& user) override;
+
+    std::optional<domain::User> find_by_id(std::uint64_t id) override;
+
+    std::vector<domain::User> find_all() override;
+
+    void remove(std::uint64_t id) override;
+
+    std::uint64_t create(const domain::User& user,
+                         const std::string& password_hash) override;
+
+    std::optional<persistence::UserCredentials> find_credentials_by_email(
+        const std::string& email) override;
 
 private:
-    std::shared_ptr<PostgresDatabase> database_;
+    PostgresDatabase& database_;
 };
 
 } // namespace virtual_planner::infrastructure::postgres
+
+#endif

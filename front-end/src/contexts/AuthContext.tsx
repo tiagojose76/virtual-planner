@@ -1,29 +1,14 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import { useState, type ReactNode } from "react";
 import type { User } from "../types/domain";
-
-interface AuthContextType {
-  user: User | null;
-  login: (email: string) => void;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from "./AuthContextInstance";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
+  // Hidrata o usuário a partir do localStorage já no estado inicial, evitando
+  // setState síncrono dentro de um efeito.
+  const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem("@VirtualPlanner:user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
   const login = (email: string) => {
     // Simulação de login/cadastro simples mantendo no localStorage
@@ -44,9 +29,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context)
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
-  return context;
-};

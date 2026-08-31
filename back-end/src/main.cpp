@@ -10,7 +10,6 @@
 #include "virtual_planner/persistence/memory/repositories.hpp"
 #include "virtual_planner/persistence/repository_set.hpp"
 #include "virtual_planner/shared/errors.hpp"
-#include "virtual_planner/infrastructure/postgres/postgres_user_repository.hpp"
 
 #if defined(VIRTUAL_PLANNER_WITH_HTTP)
 #include "virtual_planner/api/http/api_server.hpp"
@@ -29,6 +28,7 @@
 #include "virtual_planner/infrastructure/postgres/postgres_goal_repository.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_reminder_repository.hpp"
 #include "virtual_planner/infrastructure/postgres/postgres_task_repository.hpp"
+#include "virtual_planner/infrastructure/postgres/postgres_user_repository.hpp"
 
 #include <optional>
 #endif

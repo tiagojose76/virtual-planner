@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -30,10 +30,6 @@ function LayoutWrapper() {
   // Deriva a aba ativa baseada na URL atual
   const currentTab = location.pathname.split("/")[1] || "dashboard";
 
-  const handleTabChange = (tab: string) => {
-    navigate(tab === "dashboard" ? "/" : `/${tab}`);
-  };
-
   const handleQuickCreate = () => {
     navigate("/tasks/new");
   };
@@ -41,7 +37,6 @@ function LayoutWrapper() {
   return (
     <AppShell
       currentTab={currentTab}
-      setCurrentTab={handleTabChange}
       theme={theme}
       onThemeChange={setTheme}
       onQuickCreate={handleQuickCreate}
